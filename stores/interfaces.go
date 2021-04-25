@@ -41,6 +41,9 @@ type Blog interface {
 
 	// Update updates the blog by its ID.
 	Update(ctx context.Context, model models.Blog) (*models.Blog, error)
+
+	// Delete deletes a blog by its ID.
+	Delete(ctx context.Context, blogID string) error
 }
 
 type Tag interface {
