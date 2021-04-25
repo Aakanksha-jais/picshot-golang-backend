@@ -22,17 +22,14 @@ type User struct {
 }
 
 const (
-	UserName   = `user_name`
-	Email      = `email`
-	Password   = `password`
-	FName      = `f_name`
-	LName      = `l_name`
-	PhoneNo    = `phone_no`
-	ID         = `id`
-	CreatedAt  = `created_at`
-	PwdUpdate  = `pwd_update`
-	DelRequest = `del_req`
-	Status     = `status`
+	UserName  = `user_name`
+	Email     = `email`
+	FName     = `f_name`
+	LName     = `l_name`
+	PhoneNo   = `phone_no`
+	ID        = `id`
+	CreatedAt = `created_at`
+	Status    = `status`
 )
 
 func (a *Account) WhereClause() (whereClause string, queryParams []interface{}) {
