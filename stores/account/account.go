@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Aakanksha-jais/picshot-golang-backend/errors"
-	"github.com/Aakanksha-jais/picshot-golang-backend/filters"
 	"github.com/Aakanksha-jais/picshot-golang-backend/log"
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -36,7 +36,7 @@ const (
 )
 
 // GetAll retrieves all accounts that match the given filter.
-func (ac account) GetAll(ctx context.Context, filter *filters.Account) ([]*models.Account, error) {
+func (ac account) GetAll(ctx context.Context, filter *models.Account) ([]*models.Account, error) {
 	where, qp := filter.WhereClause()
 	query := fmt.Sprintf(
 		"SELECT %s, %s, %s , %s, %s, %s, %s, %s, %s, %s FROM accounts WHERE %s",
@@ -88,7 +88,7 @@ func (ac account) GetAll(ctx context.Context, filter *filters.Account) ([]*model
 }
 
 // Get retrieves a single account that matches a given filter.
-func (ac account) Get(ctx context.Context, filter *filters.Account) (*models.Account, error) {
+func (ac account) Get(ctx context.Context, filter *models.Account) (*models.Account, error) {
 	where, qp := filter.WhereClause()
 	query := fmt.Sprintf(
 		"SELECT %s, %s, %s , %s, %s, %s, %s, %s, %s, %s FROM accounts WHERE %s",
@@ -175,7 +175,7 @@ func (ac account) Create(ctx context.Context, model *models.Account) (*models.Ac
 		return nil, errors.DBError{Err: err}
 	}
 
-	account, err := ac.Get(ctx, &filters.Account{ID: id})
+	account, err := ac.Get(ctx, &models.Account{ID: id})
 	if err != nil {
 		return nil, err
 	}
@@ -198,14 +198,14 @@ func (ac account) Update(ctx context.Context, model *models.Account) (*models.Ac
 		return nil, errors.DBError{Err: err}
 	}
 
-	if model.Password != "" {
+	if !reflect.DeepEqual(model.Password, []byte{}) {
 		_, err = ac.db.ExecContext(ctx, "UPDATE accounts SET pwd_update = ? WHERE id = ?", time.Now(), id)
 		if err != nil {
 			return nil, errors.DBError{Err: err}
 		}
 	}
 
-	return ac.Get(ctx, &filters.Account{ID: id})
+	return ac.Get(ctx, &models.Account{ID: id})
 }
 
 func generateSetClause(model *models.Account) (setClause string, qp []interface{}) {
@@ -217,7 +217,7 @@ func generateSetClause(model *models.Account) (setClause string, qp []interface{
 		qp = append(qp, model.UserName)
 	}
 
-	if model.Password != "" {
+	if !reflect.DeepEqual(model.Password, []byte{}) {
 		setClause += ` password = ?,`
 
 		qp = append(qp, model.Password)

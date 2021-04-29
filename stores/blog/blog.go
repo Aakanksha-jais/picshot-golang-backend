@@ -2,7 +2,6 @@ package blog
 
 import (
 	"context"
-	"github.com/Aakanksha-jais/picshot-golang-backend/filters"
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -20,7 +19,7 @@ func New(db *mongo.Database) blog {
 
 // GetAll is used to retrieve all blogs that match the filter.
 // BLogs can be filtered by account_id, blog_id and title.
-func (b blog) GetAll(ctx context.Context, filter filters.Blog) ([]*models.Blog, error) {
+func (b blog) GetAll(ctx context.Context, filter models.Blog) ([]*models.Blog, error) {
 	collection := b.db.Collection("blogs")
 
 	opts := options.Find().SetSort(bson.D{{Key: "_id", Value: -1}}) // retrieve the blogs in reverse chronological order
@@ -73,7 +72,7 @@ func (b blog) GetByIDs(ctx context.Context, idList []string) ([]*models.Blog, er
 
 // Get is used to retrieve a SINGLE blog that matches the filter.
 // A blog can be filtered by account_id, blog_id and title.
-func (b blog) Get(ctx context.Context, filter filters.Blog) (*models.Blog, error) {
+func (b blog) Get(ctx context.Context, filter models.Blog) (*models.Blog, error) {
 	var blog models.Blog
 
 	collection := b.db.Collection("blogs")
@@ -107,14 +106,14 @@ func (b blog) Create(ctx context.Context, model models.Blog) (*models.Blog, erro
 
 	id := res.InsertedID
 
-	return b.Get(ctx, filters.Blog{BlogID: id.(string)})
+	return b.Get(ctx, models.Blog{BlogID: id.(string)})
 }
 
 // Update updates the blog by its ID.
 func (b blog) Update(ctx context.Context, model models.Blog) (*models.Blog, error) {
 	collection := b.db.Collection("blogs")
 
-	res := collection.FindOneAndUpdate(ctx, bson.M{"_id": model.BlogID}, generateUpdateFilter(model))
+	res := collection.FindOneAndUpdate(ctx, bson.M{"_id": model.BlogID}, generateFilter(model))
 
 	if err := res.Err(); err != nil {
 		return nil, err
@@ -134,10 +133,10 @@ func (b blog) Update(ctx context.Context, model models.Blog) (*models.Blog, erro
 		}
 	}
 
-	return b.Get(ctx, filters.Blog{BlogID: model.BlogID})
+	return b.Get(ctx, models.Blog{BlogID: model.BlogID})
 }
 
-func generateUpdateFilter(model models.Blog) bson.M {
+func generateFilter(model models.Blog) bson.M {
 	update := bson.M{}
 	if model.Title != "" {
 		update["title"] = model.Title
