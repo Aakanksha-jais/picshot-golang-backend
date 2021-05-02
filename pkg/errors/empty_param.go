@@ -7,5 +7,5 @@ type MissingParam struct {
 }
 
 func (e MissingParam) Error() string {
-	return fmt.Sprintf("missing value for param %s", e.Param)
+	return fmt.Sprintf("missing value for param: %s", e.Param)
 }

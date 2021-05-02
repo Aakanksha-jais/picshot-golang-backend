@@ -7,5 +7,5 @@ type InvalidParam struct {
 }
 
 func (e InvalidParam) Error() string {
-	return fmt.Sprintf("invalid value for param %s", e.Param)
+	return fmt.Sprintf("invalid value for param: %s", e.Param)
 }
