@@ -9,7 +9,6 @@ import (
 
 type Account struct {
 	User                    // Details of the User
-	ID         int64        `json:"id"`         // Unique Account ID
 	PwdUpdate  time.Time    `json:"pwd_update"` // Time Stamp of most recent Password Update
 	Blogs      []Blog       `json:"blogs"`      // List of Blogs posted by Account
 	CreatedAt  time.Time    `json:"created_at"` // Time of Creation of Account
@@ -18,6 +17,7 @@ type Account struct {
 }
 
 type User struct {
+	ID       int64          `json:"-"`         // Unique User ID
 	UserName string         `json:"user_name"` // Username
 	FName    string         `json:"f_name"`    // First Name
 	LName    string         `json:"l_name"`    // Last Name
