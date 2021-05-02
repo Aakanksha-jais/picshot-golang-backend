@@ -17,7 +17,7 @@ type SQLConfigs struct {
 }
 
 func (c SQLConfigs) ConnectToSQL() (*sql.DB, error) {
-	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", c.Username, c.Password, c.Host, c.Port, c.Database)
+	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", c.Username, c.Password, c.Host, c.Port, c.Database)
 
 	db, err := sql.Open("mysql", connectionString)
 	if err != nil {
@@ -33,6 +33,6 @@ func NewSQLConfigs(config configs.ConfigLoader) SQLConfigs {
 		Username: config.Get("DB_USER"),
 		Password: config.Get("DB_PASSWORD"),
 		Port:     config.Get("DB_PORT"),
-		Database: config.Get("DATABASE"),
+		Database: config.Get("DB_NAME"),
 	}
 }

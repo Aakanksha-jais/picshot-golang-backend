@@ -12,13 +12,21 @@ import (
 )
 
 type MongoConfigs struct {
-	Host     string
+	Username string
+	Password string
+	HostName string
 	Port     string
 	Database string
 }
 
 func (c MongoConfigs) ConnectToMongo() (*mongo.Database, error) {
-	connectionString := fmt.Sprintf("mongodb://%s:%v/", c.Host, c.Port)
+	var connectionString string
+
+	if c.Username != "" && c.Password != "" {
+		connectionString = fmt.Sprintf("mongodb://%v:%v@%v:%v/", c.Username, c.Password, c.HostName, c.Port)
+	} else {
+		connectionString = fmt.Sprintf("mongodb://%s:%v/", c.HostName, c.Port)
+	}
 
 	clientOptions := options.Client().ApplyURI(connectionString)
 
@@ -42,8 +50,10 @@ func (c MongoConfigs) ConnectToMongo() (*mongo.Database, error) {
 
 func NewMongoConfigs(config configs.ConfigLoader) MongoConfigs {
 	return MongoConfigs{
-		Host:     config.Get("MONGO_HOST"),
-		Port:     config.Get("MONGO_PORT"),
-		Database: config.GetOrDefault("MONGO_DATABASE", "picshot"),
+		Username: config.Get("MONGO_DB_USER"),
+		Password: config.Get("MONGO_DB_PASS"),
+		HostName: config.GetOrDefault("MONGO_DB_HOST", "localhost"),
+		Port:     config.GetOrDefault("MONGO_DB_PORT", "27017"),
+		Database: config.Get("MONGO_DB_NAME"),
 	}
 }
