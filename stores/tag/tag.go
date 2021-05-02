@@ -2,18 +2,21 @@ package tag
 
 import (
 	"context"
-	"github.com/Aakanksha-jais/picshot-golang-backend/errors"
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
+	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type tag struct {
-	db *mongo.Database
+	db     *mongo.Database
+	logger log.Logger
 }
 
-func New(db *mongo.Database) tag {
-	return tag{db}
+func New(db *mongo.Database, logger log.Logger) stores.Tag {
+	return tag{db: db, logger: logger}
 }
 
 // GetByName retrieves a tag by its name.
@@ -32,12 +35,12 @@ func (t tag) GetByName(ctx context.Context, name string) (*models.Tag, error) {
 		return nil, errors.EntityNotFound{Entity: "tag", ID: name}
 	}
 	if err != nil {
-		return nil, errors.DBError{Err: err}
+		return nil, errors.Error{Err: err}
 	}
 
 	err = res.Decode(&tag)
 	if err != nil {
-		return nil, errors.DBError{Err: err}
+		return nil, errors.Error{Err: err}
 	}
 
 	return &tag, err

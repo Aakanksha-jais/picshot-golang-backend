@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/Aakanksha-jais/picshot-golang-backend/errors"
-	"github.com/Aakanksha-jais/picshot-golang-backend/log"
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
+	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 	"reflect"
 	"strings"
 	"time"
@@ -17,8 +18,8 @@ type account struct {
 	logger log.Logger
 }
 
-func New(db *sql.DB) account {
-	return account{db: db}
+func New(db *sql.DB, logger log.Logger) stores.Account {
+	return account{db: db, logger: logger}
 }
 
 const (
@@ -175,7 +176,7 @@ func (ac account) Create(ctx context.Context, model *models.Account) (*models.Ac
 		return nil, errors.DBError{Err: err}
 	}
 
-	account, err := ac.Get(ctx, &models.Account{ID: id})
+	account, err := ac.Get(ctx, &models.Account{User: models.User{ID: id}})
 	if err != nil {
 		return nil, err
 	}
@@ -198,18 +199,11 @@ func (ac account) Update(ctx context.Context, model *models.Account) (*models.Ac
 		return nil, errors.DBError{Err: err}
 	}
 
-	if !reflect.DeepEqual(model.Password, []byte{}) {
-		_, err = ac.db.ExecContext(ctx, "UPDATE accounts SET pwd_update = ? WHERE id = ?", time.Now(), id)
-		if err != nil {
-			return nil, errors.DBError{Err: err}
-		}
-	}
-
-	return ac.Get(ctx, &models.Account{ID: id})
+	return ac.Get(ctx, &models.Account{User: models.User{ID: id}})
 }
 
 func generateSetClause(model *models.Account) (setClause string, qp []interface{}) {
-	setClause = `set`
+	setClause = `UPDATE accounts SET`
 
 	if model.UserName != "" {
 		setClause += ` user_name = ?,`
@@ -218,9 +212,9 @@ func generateSetClause(model *models.Account) (setClause string, qp []interface{
 	}
 
 	if !reflect.DeepEqual(model.Password, []byte{}) {
-		setClause += ` password = ?,`
+		setClause += ` password = ?, pwd_update = ?,`
 
-		qp = append(qp, model.Password)
+		qp = append(qp, model.Password, time.Now())
 	}
 
 	if model.Email.String != "" {
@@ -247,8 +241,20 @@ func generateSetClause(model *models.Account) (setClause string, qp []interface{
 		qp = append(qp, model.PhoneNo.String)
 	}
 
+	if model.Status != "ACTIVE" {
+		setClause += ` status = ?,`
+
+		qp = append(qp, "ACTIVE")
+	}
+
+	// todo update del req
+	if !model.DelRequest.Valid {
+		setClause += ` del_req = ?,`
+
+		qp = append(qp, "NULL") //set to null
+	}
+
 	setClause = strings.TrimSuffix(setClause, ",")
-	setClause = strings.TrimSuffix(setClause, "set")
 
 	return setClause, qp
 }

@@ -2,16 +2,15 @@ package stores
 
 import (
 	"context"
-	"github.com/Aakanksha-jais/picshot-golang-backend/filters"
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 )
 
 type Account interface {
 	// GetAll retrieves all accounts that match the given filter.
-	GetAll(ctx context.Context, filter *filters.Account) ([]*models.Account, error)
+	GetAll(ctx context.Context, filter *models.Account) ([]*models.Account, error)
 
 	// Get retrieves a single account that matches a given filter.
-	Get(ctx context.Context, filter *filters.Account) (*models.Account, error)
+	Get(ctx context.Context, filter *models.Account) (*models.Account, error)
 
 	// Create creates an account.
 	Create(ctx context.Context, model *models.Account) (*models.Account, error)
@@ -27,14 +26,14 @@ type Account interface {
 type Blog interface {
 	// GetAll is used to retrieve all blogs that match the filter.
 	// BLogs can be filtered by account_id, blog_id and title.
-	GetAll(ctx context.Context, filter filters.Blog) ([]*models.Blog, error)
+	GetAll(ctx context.Context, filter models.Blog) ([]*models.Blog, error)
 
 	// GetByIDs retrieves all blogs whose IDs have been provided as parameter.
 	GetByIDs(ctx context.Context, idList []string) ([]*models.Blog, error)
 
 	// Get is used to retrieve a SINGLE blog that matches the filter.
 	// A blog can be filtered by account_id, blog_id and title.
-	Get(ctx context.Context, filter filters.Blog) (*models.Blog, error)
+	Get(ctx context.Context, filter models.Blog) (*models.Blog, error)
 
 	// Create is used to create a new blog.
 	Create(ctx context.Context, model models.Blog) (*models.Blog, error)

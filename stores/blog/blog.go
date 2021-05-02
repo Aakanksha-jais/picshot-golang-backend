@@ -3,6 +3,8 @@ package blog
 import (
 	"context"
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
+	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -10,11 +12,12 @@ import (
 )
 
 type blog struct {
-	db *mongo.Database
+	db     *mongo.Database
+	logger log.Logger
 }
 
-func New(db *mongo.Database) blog {
-	return blog{db: db}
+func New(db *mongo.Database, logger log.Logger) stores.Blog {
+	return blog{db: db, logger: logger}
 }
 
 // GetAll is used to retrieve all blogs that match the filter.
