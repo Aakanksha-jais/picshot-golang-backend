@@ -2,8 +2,9 @@ package account
 
 import (
 	"context"
-	"github.com/Aakanksha-jais/picshot-golang-backend/log"
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 	"github.com/Aakanksha-jais/picshot-golang-backend/services"
 	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 	"golang.org/x/crypto/bcrypt"
@@ -15,7 +16,7 @@ type account struct {
 	logger       log.Logger
 }
 
-func New(accountStore stores.Account, blogService services.Blog, logger log.Logger) account {
+func New(accountStore stores.Account, blogService services.Blog, logger log.Logger) services.Account {
 	return account{
 		accountStore: accountStore,
 		blogService:  blogService,
@@ -46,18 +47,6 @@ func (a account) GetByID(ctx context.Context, filter *models.Account) (*models.A
 	return account, nil
 }
 
-// Create creates an account and assigns an account_id to it.
-func (a account) Create(ctx context.Context, model *models.Account) (*models.Account, error) {
-	password, err := bcrypt.GenerateFromPassword(model.Password, bcrypt.MaxCost)
-	if err != nil {
-		//todo return error
-	}
-
-	model.Password = password
-
-	return a.accountStore.Create(ctx, model)
-}
-
 // Update updates account information based on account_id.
 func (a account) Update(ctx context.Context, model *models.Account) (*models.Account, error) {
 	return a.accountStore.Update(ctx, model)
@@ -69,16 +58,56 @@ func (a account) Delete(ctx context.Context, id int64) error {
 	return a.accountStore.Delete(ctx, id)
 }
 
-func (a account) LogIn(ctx context.Context, user models.User) error {
-	account, err := a.GetByID(ctx, &models.Account{User: user})
+// Create creates an account and assigns an id to it.
+func (a account) Create(ctx context.Context, user *models.User) (*models.Account, error) {
+	if user == nil {
+		return nil, errors.MissingParam{Param: "user_details"}
+	}
+
+	if user.UserName == "" {
+		return nil, errors.MissingParam{Param: "user_name"}
+	}
+
+	if user.Email.String == "" && user.PhoneNo.String == "" {
+		return nil, errors.MissingParam{Param: "email"}
+	}
+
+	if user.FName == "" || user.LName == "" {
+		return nil, errors.MissingParam{Param: "name"}
+	}
+
+	var account models.Account
+
+	account.User = *user
+
+	password, err := bcrypt.GenerateFromPassword(user.Password, bcrypt.MaxCost)
 	if err != nil {
-		return err
+		return nil, errors.Error{Err: err, Message: "error in hashing password", Type: "password-hash-error"}
+	}
+
+	account.Password = password
+
+	return a.accountStore.Create(ctx, &account)
+}
+
+// Get gets an account by the User Details filter.
+func (a account) Get(ctx context.Context, user *models.User) (*models.Account, error) {
+	if user == nil {
+		return nil, errors.MissingParam{Param: "user details"}
+	}
+	account, err := a.accountStore.Get(ctx, &models.Account{User: *user})
+	if err != nil {
+		return nil, err
+	}
+
+	if account == nil {
+		return nil, errors.EntityNotFound{Entity: "user"}
 	}
 
 	err = bcrypt.CompareHashAndPassword(account.Password, user.Password)
 	if err != nil {
-		//todo incorrect password error
+		return nil, errors.AuthError{Err: err, Message: "invalid password"}
 	}
 
-	return nil
+	return account, nil
 }

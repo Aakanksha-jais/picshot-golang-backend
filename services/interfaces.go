@@ -13,7 +13,7 @@ type Account interface {
 	GetByID(ctx context.Context, filter *models.Account) (*models.Account, error)
 
 	// Create creates an account and assigns an account_id to it.
-	Create(ctx context.Context, model *models.Account) (*models.Account, error)
+	Create(ctx context.Context, user *models.User) (*models.Account, error)
 
 	// Update updates account information based on account_id.
 	Update(ctx context.Context, model *models.Account) (*models.Account, error)
@@ -21,6 +21,9 @@ type Account interface {
 	// Delete deactivates an account and updates it's deletion request.
 	// After 30 days, the account gets deleted if the status remains inactive.
 	Delete(ctx context.Context, id int64) error
+
+	// Get gets an account by the User Details filter.
+	Get(ctx context.Context, user *models.User) (*models.Account, error)
 }
 
 type Blog interface {
