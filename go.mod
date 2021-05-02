@@ -7,9 +7,6 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gorilla/mux v1.8.0
 	github.com/joho/godotenv v1.3.0
-	github.com/myesui/uuid v1.0.0 // indirect
-	github.com/twinj/uuid v1.0.0
 	go.mongodb.org/mongo-driver v1.5.1
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
-	gopkg.in/stretchr/testify.v1 v1.2.2 // indirect
 )
