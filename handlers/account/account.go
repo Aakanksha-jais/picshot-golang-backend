@@ -5,6 +5,7 @@ import (
 	"github.com/Aakanksha-jais/picshot-golang-backend/handlers"
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 	"github.com/Aakanksha-jais/picshot-golang-backend/services"
@@ -17,12 +18,14 @@ import (
 type account struct {
 	service services.Account
 	logger  log.Logger
+	config  configs.ConfigLoader
 }
 
-func New(service services.Account, logger log.Logger) handlers.Account {
+func New(service services.Account, logger log.Logger, config configs.ConfigLoader) handlers.Account {
 	return account{
 		service: service,
 		logger:  logger,
+		config:  config,
 	}
 }
 
@@ -47,7 +50,7 @@ func (a account) LogIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create a JWT Token
-	token, err := generateToken(expirationTime, account.ID)
+	token, err := generateToken(expirationTime, account.ID, a.config)
 	handlers.SetHeader(w, err) // Set Header to StatusOK if err is nil
 
 	if err != nil {
@@ -79,7 +82,7 @@ func (a account) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create a JWT Token
-	token, err := generateToken(expirationTime, account.ID)
+	token, err := generateToken(expirationTime, account.ID, a.config)
 	if err != nil {
 		handlers.SetHeader(w, err)
 		return
@@ -100,8 +103,8 @@ func setCookie(w http.ResponseWriter, token string, exp time.Time) {
 	})
 }
 
-func generateToken(exp time.Time, userID int64) (string, error) {
-	token, err := auth.CreateToken(auth.NewClaim(exp.Unix(), userID))
+func generateToken(exp time.Time, userID int64, config configs.ConfigLoader) (string, error) {
+	token, err := auth.CreateToken(config, auth.NewClaim(exp.Unix(), userID))
 	if err != nil {
 		return "", err
 	}

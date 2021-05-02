@@ -20,15 +20,15 @@ import (
 func main() {
 
 	logger := log.NewLogger()
-	configLoader := configs.NewConfigLoader("/configs", logger)
+	config := configs.NewConfigLoader("/configs", logger)
 
-	mongoDB, err := driver.NewMongoConfigs(configLoader).ConnectToMongo()
+	mongoDB, err := driver.NewMongoConfigs(config).ConnectToMongo()
 	if err != nil {
 		logger.Fatalf("cannot connect to  mongo %v", err)
 		return
 	}
 
-	sqlDB, err := driver.NewSQLConfigs(configLoader).ConnectToSQL()
+	sqlDB, err := driver.NewSQLConfigs(config).ConnectToSQL()
 	if err != nil {
 		logger.Fatalf("cannot connect to sql %v", err)
 		return
@@ -43,7 +43,7 @@ func main() {
 	accountService := serviceAccount.New(accountStore, blogService, logger)
 
 	blogHandler := handlerBlog.New(blogService, logger)
-	accountHandler := handlerAccount.New(accountService, logger)
+	accountHandler := handlerAccount.New(accountService, logger, config)
 
 	r := mux.NewRouter()
 
@@ -53,11 +53,11 @@ func main() {
 	r.HandleFunc("/blogs", blogHandler.GetAll)
 
 	// Middlewares
-	r.Use(middlewares.Authentication)
+	r.Use(middlewares.Authentication(config, logger))
 
 	server := &http.Server{
 		Handler: r,
-		Addr:    fmt.Sprintf("localhost:%s", configLoader.Get("HTTP_PORT")),
+		Addr:    fmt.Sprintf("localhost:%s", config.Get("HTTP_PORT")),
 	}
 
 	logger.Fatal(server.ListenAndServe())
