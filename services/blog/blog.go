@@ -3,9 +3,9 @@ package blog
 import (
 	"context"
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
-	errors2 "github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
-	log2 "github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
-	types2 "github.com/Aakanksha-jais/picshot-golang-backend/pkg/types"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/types"
 	"github.com/Aakanksha-jais/picshot-golang-backend/services"
 	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 )
@@ -13,10 +13,10 @@ import (
 type blog struct {
 	blogStore stores.Blog
 	tagStore  stores.Tag
-	logger    log2.Logger
+	logger    log.Logger
 }
 
-func New(blogStore stores.Blog, tagStore stores.Tag, logger log2.Logger) services.Blog {
+func New(blogStore stores.Blog, tagStore stores.Tag, logger log.Logger) services.Blog {
 	return blog{
 		blogStore: blogStore,
 		tagStore:  tagStore,
@@ -42,7 +42,7 @@ func (b blog) GetAllByTagName(ctx context.Context, name string) ([]*models.Blog,
 // GetByID is used to retrieve a single blog by its id.
 func (b blog) GetByID(ctx context.Context, id string) (*models.Blog, error) {
 	if id == "" {
-		return nil, errors2.MissingParam{Param: "blog_id"}
+		return nil, errors.MissingParam{Param: "blog_id"}
 	}
 
 	return b.blogStore.Get(ctx, models.Blog{BlogID: id})
@@ -60,7 +60,7 @@ func (b blog) Create(ctx context.Context, model models.Blog) (*models.Blog, erro
 		return nil, err
 	}
 
-	model.CreatedOn = types2.Date{}.Today().String()
+	model.CreatedOn = types.Date{}.Today().String()
 
 	// todo: store images to cloud and add image urls to model
 
@@ -80,19 +80,19 @@ func (b blog) Create(ctx context.Context, model models.Blog) (*models.Blog, erro
 
 func checkMissingParams(model models.Blog) error {
 	if model.AccountID == 0 {
-		return errors2.MissingParam{Param: "account_id"}
+		return errors.MissingParam{Param: "account_id"}
 	}
 
 	if model.Title == "" {
-		return errors2.MissingParam{Param: "title"}
+		return errors.MissingParam{Param: "title"}
 	}
 
 	if model.Summary == "" {
-		return errors2.MissingParam{Param: "summary"}
+		return errors.MissingParam{Param: "summary"}
 	}
 
 	if model.Content == "" {
-		return errors2.MissingParam{Param: "content"}
+		return errors.MissingParam{Param: "content"}
 	}
 	return nil
 }
@@ -104,12 +104,12 @@ func (b blog) Update(ctx context.Context, model models.Blog) (*models.Blog, erro
 	id := model.BlogID
 
 	if id == "" {
-		return nil, errors2.MissingParam{Param: "blog_id"}
+		return nil, errors.MissingParam{Param: "blog_id"}
 	}
 
 	blog, err := b.blogStore.Get(ctx, models.Blog{BlogID: id})
 	if err != nil {
-		return nil, errors2.EntityNotFound{Entity: "blog", ID: id}
+		return nil, errors.EntityNotFound{Entity: "blog", ID: id}
 	}
 
 	// todo: store images to cloud and add image urls to model
@@ -139,12 +139,12 @@ func (b blog) Update(ctx context.Context, model models.Blog) (*models.Blog, erro
 // Delete deletes a blog based on its id.
 func (b blog) Delete(ctx context.Context, id string) error {
 	if id == "" {
-		return errors2.MissingParam{Param: "blog_id"}
+		return errors.MissingParam{Param: "blog_id"}
 	}
 
 	blog, err := b.blogStore.Get(ctx, models.Blog{BlogID: id})
 	if err != nil {
-		return errors2.EntityNotFound{Entity: "blog", ID: id}
+		return errors.EntityNotFound{Entity: "blog", ID: id}
 	}
 
 	err = b.blogStore.Delete(ctx, id)
