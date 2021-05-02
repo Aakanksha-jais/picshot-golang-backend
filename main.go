@@ -20,7 +20,7 @@ import (
 func main() {
 
 	logger := log.NewLogger()
-	config := configs.NewConfigLoader("/configs", logger)
+	config := configs.NewConfigLoader("./configs", logger)
 
 	mongoDB, err := driver.NewMongoConfigs(config).ConnectToMongo()
 	if err != nil {
@@ -60,5 +60,5 @@ func main() {
 		Addr:    fmt.Sprintf("localhost:%s", config.Get("HTTP_PORT")),
 	}
 
-	logger.Fatal(server.ListenAndServe())
+	logger.Fatalf("error in starting the server: ", server.ListenAndServe())
 }

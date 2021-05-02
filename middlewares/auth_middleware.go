@@ -16,6 +16,8 @@ type JWTContextKey string
 func Authentication(config configs.ConfigLoader, logger log.Logger) func(inner http.Handler) http.Handler {
 	return func(inner http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			logger.Debugf("request on endpoint: %s", r.URL.String())
+
 			if exemptPath(r) {
 				inner.ServeHTTP(w, r)
 				return
