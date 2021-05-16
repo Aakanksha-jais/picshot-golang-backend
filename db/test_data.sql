@@ -14,4 +14,4 @@ VALUES ("divij_gupta", "$2a$10$PFaxwsavIJuQEqga4tFMQ.oofBlx6qE/RebQVHdofxXKcvJbA
 
 -- run the following commands from project root:
 -- sudo mysql -u root < db/schema.sql
--- sudo mysql -u root < db/schema.sql
+-- sudo mysql -u root < db/test_data.sql
