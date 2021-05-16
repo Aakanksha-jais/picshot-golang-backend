@@ -3,7 +3,6 @@ package account
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
@@ -23,40 +22,19 @@ func New(db *sql.DB, logger log.Logger) stores.Account {
 }
 
 const (
-	UserName   = `user_name`
-	Email      = `email`
-	Password   = `password`
-	FName      = `f_name`
-	LName      = `l_name`
-	PhoneNo    = `phone_no`
-	ID         = `id`
-	CreatedAt  = `created_at`
-	PwdUpdate  = `pwd_update`
-	DelRequest = `del_req`
-	Status     = `status`
+	getAll = "SELECT id, user_name, email, f_name, l_name, phone_no, created_at, pwd_update, del_req, status FROM accounts WHERE "
+	get    = "SELECT id, user_name, email, password, f_name, l_name, phone_no, created_at, pwd_update, del_req, status FROM accounts WHERE "
+	insert = "INSERT INTO accounts( user_name, password, email, f_name, l_name, phone_no, pwd_update, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
 )
 
 // GetAll retrieves all accounts that match the given filter.
-func (ac account) GetAll(ctx context.Context, filter *models.Account) ([]*models.Account, error) {
+func (a account) GetAll(ctx context.Context, filter *models.Account) ([]*models.Account, error) {
 	where, qp := filter.WhereClause()
-	query := fmt.Sprintf(
-		"SELECT %s, %s, %s , %s, %s, %s, %s, %s, %s, %s FROM accounts WHERE %s",
-		ID,
-		UserName,
-		Email,
-		FName,
-		LName,
-		PhoneNo,
-		CreatedAt,
-		PwdUpdate,
-		DelRequest,
-		Status,
-		where,
-	)
+	query := getAll + where
 
 	accounts := make([]*models.Account, 0)
 
-	rows, err := ac.db.QueryContext(ctx, query, qp...)
+	rows, err := a.db.QueryContext(ctx, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -65,18 +43,7 @@ func (ac account) GetAll(ctx context.Context, filter *models.Account) ([]*models
 
 	for rows.Next() {
 		var account models.Account
-		err := rows.Scan(
-			&account.ID,
-			&account.UserName,
-			&account.Email,
-			&account.FName,
-			&account.LName,
-			&account.PhoneNo,
-			&account.CreatedAt,
-			&account.PwdUpdate,
-			&account.DelRequest,
-			&account.Status,
-		)
+		err := rows.Scan(&account.ID, &account.UserName, &account.Email, &account.FName, &account.LName, &account.PhoneNo, &account.CreatedAt, &account.PwdUpdate, &account.DelRequest, &account.Status)
 
 		if err != nil {
 			return nil, errors.DBError{Err: err}
@@ -85,28 +52,16 @@ func (ac account) GetAll(ctx context.Context, filter *models.Account) ([]*models
 		accounts = append(accounts, &account)
 	}
 
+	a.logger.Debugf("successful execution of 'GetAll' accounts in storage layer")
 	return accounts, nil
 }
 
 // Get retrieves a single account that matches a given filter.
-func (ac account) Get(ctx context.Context, filter *models.Account) (*models.Account, error) {
+func (a account) Get(ctx context.Context, filter *models.Account) (*models.Account, error) {
 	where, qp := filter.WhereClause()
-	query := fmt.Sprintf(
-		"SELECT %s, %s, %s , %s, %s, %s, %s, %s, %s, %s FROM accounts WHERE %s",
-		ID,
-		UserName,
-		Email,
-		FName,
-		LName,
-		PhoneNo,
-		CreatedAt,
-		PwdUpdate,
-		DelRequest,
-		Status,
-		where,
-	)
+	query := get + where
 
-	rows, err := ac.db.QueryContext(ctx, query, qp...)
+	rows, err := a.db.QueryContext(ctx, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -116,57 +71,22 @@ func (ac account) Get(ctx context.Context, filter *models.Account) (*models.Acco
 	var account models.Account
 
 	for rows.Next() {
-		err := rows.Scan(
-			&account.ID,
-			&account.UserName,
-			&account.Email,
-			&account.FName,
-			&account.LName,
-			&account.PhoneNo,
-			&account.CreatedAt,
-			&account.PwdUpdate,
-			&account.DelRequest,
-			&account.Status,
-		)
-
-		if err == sql.ErrNoRows {
-			return nil, errors.EntityNotFound{Entity: "account"}
-		}
-
+		err := rows.Scan(&account.ID, &account.UserName, &account.Email, &account.Password, &account.FName, &account.LName, &account.PhoneNo, &account.CreatedAt, &account.PwdUpdate, &account.DelRequest, &account.Status)
 		if err != nil {
 			return nil, errors.DBError{Err: err}
 		}
+	}
+
+	if reflect.DeepEqual(account, models.Account{}) {
+		return nil, errors.EntityNotFound{Entity: "account"}
 	}
 
 	return &account, nil
 }
 
 // Create creates an account.
-func (ac account) Create(ctx context.Context, model *models.Account) (*models.Account, error) {
-	query := fmt.Sprintf(
-		"INSERT INTO accounts( %s, %s, %s, %s, %s, %s, %s, %s) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		UserName,
-		Password,
-		Email,
-		FName,
-		LName,
-		PhoneNo,
-		PwdUpdate,
-		Status,
-	)
-
-	res, err := ac.db.ExecContext(
-		ctx,
-		query,
-		model.UserName,
-		model.Password,
-		model.Email,
-		model.FName,
-		model.LName,
-		model.PhoneNo,
-		time.Now(),
-		model.Status,
-	)
+func (a account) Create(ctx context.Context, model *models.Account) (*models.Account, error) {
+	res, err := a.db.ExecContext(ctx, insert, model.UserName, model.Password, model.Email, model.FName, model.LName, model.PhoneNo, time.Now(), model.Status)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -176,7 +96,7 @@ func (ac account) Create(ctx context.Context, model *models.Account) (*models.Ac
 		return nil, errors.DBError{Err: err}
 	}
 
-	account, err := ac.Get(ctx, &models.Account{User: models.User{ID: id}})
+	account, err := a.Get(ctx, &models.Account{User: models.User{ID: id}})
 	if err != nil {
 		return nil, err
 	}
@@ -185,11 +105,11 @@ func (ac account) Create(ctx context.Context, model *models.Account) (*models.Ac
 }
 
 // Update updates an account.
-func (ac account) Update(ctx context.Context, model *models.Account) (*models.Account, error) {
+func (a account) Update(ctx context.Context, model *models.Account) (*models.Account, error) {
 
 	query, qp := generateSetClause(model)
 
-	res, err := ac.db.ExecContext(ctx, query, qp...)
+	res, err := a.db.ExecContext(ctx, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -199,7 +119,7 @@ func (ac account) Update(ctx context.Context, model *models.Account) (*models.Ac
 		return nil, errors.DBError{Err: err}
 	}
 
-	return ac.Get(ctx, &models.Account{User: models.User{ID: id}})
+	return a.Get(ctx, &models.Account{User: models.User{ID: id}})
 }
 
 func generateSetClause(model *models.Account) (setClause string, qp []interface{}) {
@@ -261,8 +181,8 @@ func generateSetClause(model *models.Account) (setClause string, qp []interface{
 
 // Delete updates a delete request for an account and sets its status to inactive.
 // Account is then permanently deleted after 30 days of inactivity.
-func (ac account) Delete(ctx context.Context, id int64) error {
-	_, err := ac.db.ExecContext(ctx, "UPDATE accounts SET del_req = ?, status = ? WHERE id = ?", time.Now(), "INACTIVE", id)
+func (a account) Delete(ctx context.Context, id int64) error {
+	_, err := a.db.ExecContext(ctx, "UPDATE accounts SET del_req = ?, status = ? WHERE id = ?", time.Now(), "INACTIVE", id)
 	if err != nil {
 		return errors.DBError{Err: err}
 	}
