@@ -9,7 +9,7 @@ import (
 
 type Account struct {
 	User                    // Details of the User
-	PwdUpdate  time.Time    `json:"pwd_update"` // Time Stamp of most recent Password Update
+	PwdUpdate  sql.NullTime `json:"pwd_update"` // Time Stamp of most recent Password Update
 	Blogs      []Blog       `json:"blogs"`      // List of Blogs posted by Account
 	CreatedAt  time.Time    `json:"created_at"` // Time of Creation of Account
 	DelRequest sql.NullTime `json:"del_req"`    // Time Stamp of Account Delete Request
@@ -23,7 +23,7 @@ type User struct {
 	LName    string         `json:"l_name"`    // Last Name
 	Email    sql.NullString `json:"email"`     // Email
 	PhoneNo  sql.NullString `json:"phone_no"`  // Phone Number
-	Password []byte         `json:"password"`  // Password
+	Password string         `json:"password"`  // Password
 }
 
 const (
@@ -40,6 +40,11 @@ const (
 func (a *Account) WhereClause() (whereClause string, queryParams []interface{}) {
 	columnList := make([]string, 0)
 	queryParams = make([]interface{}, 0)
+
+	if a.ID != 0 {
+		columnList = append(columnList, ID)
+		queryParams = append(queryParams, a.ID)
+	}
 
 	if a.UserName != "" {
 		columnList = append(columnList, UserName)
@@ -64,11 +69,6 @@ func (a *Account) WhereClause() (whereClause string, queryParams []interface{}) 
 	if a.PhoneNo.String != "" {
 		columnList = append(columnList, PhoneNo)
 		queryParams = append(queryParams, a.PhoneNo)
-	}
-
-	if a.ID != 0 {
-		columnList = append(columnList, ID)
-		queryParams = append(queryParams, a.ID)
 	}
 
 	if !reflect.DeepEqual(a.CreatedAt, time.Time{}) {
