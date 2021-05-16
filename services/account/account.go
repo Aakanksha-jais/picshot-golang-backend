@@ -49,6 +49,10 @@ func (a account) GetByID(ctx context.Context, filter *models.Account) (*models.A
 
 // Update updates account information based on account_id.
 func (a account) Update(ctx context.Context, model *models.Account) (*models.Account, error) {
+	if model.ID == 0 {
+		return nil, errors.MissingParam{Param: "user_id"}
+	}
+
 	return a.accountStore.Update(ctx, model)
 }
 
@@ -80,12 +84,12 @@ func (a account) Create(ctx context.Context, user *models.User) (*models.Account
 
 	account.User = *user
 
-	password, err := bcrypt.GenerateFromPassword(user.Password, bcrypt.MaxCost)
+	password, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, errors.Error{Err: err, Message: "error in hashing password", Type: "password-hash-error"}
 	}
 
-	account.Password = password
+	account.Password = string(password)
 
 	return a.accountStore.Create(ctx, &account)
 }
@@ -95,6 +99,7 @@ func (a account) Get(ctx context.Context, user *models.User) (*models.Account, e
 	if user == nil {
 		return nil, errors.MissingParam{Param: "user details"}
 	}
+
 	account, err := a.accountStore.Get(ctx, &models.Account{User: *user})
 	if err != nil {
 		return nil, err
@@ -104,7 +109,7 @@ func (a account) Get(ctx context.Context, user *models.User) (*models.Account, e
 		return nil, errors.EntityNotFound{Entity: "user"}
 	}
 
-	err = bcrypt.CompareHashAndPassword(account.Password, user.Password)
+	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(user.Password))
 	if err != nil {
 		return nil, errors.AuthError{Err: err, Message: "invalid password"}
 	}
