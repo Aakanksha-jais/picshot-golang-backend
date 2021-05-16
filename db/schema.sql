@@ -11,9 +11,8 @@ CREATE TABLE `accounts` (
                                   `l_name` VARCHAR(255) NOT NULL,
                                   `phone_no` VARCHAR(255),
                                   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                  `pwd_update` timestamp NOT NULL,
+                                  `pwd_update` timestamp DEFAULT NULL,
                                   `del_req` timestamp DEFAULT NULL,
                                   `status` enum('ACTIVE','INACTIVE') NOT NULL DEFAULT 'ACTIVE',
                                   PRIMARY KEY (`id`)
 );
-
