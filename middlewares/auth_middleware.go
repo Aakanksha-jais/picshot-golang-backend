@@ -2,11 +2,11 @@ package middlewares
 
 import (
 	"context"
-	"github.com/Aakanksha-jais/picshot-golang-backend/handlers"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/response"
 	"net/http"
 	"strings"
 )
@@ -17,25 +17,27 @@ func Authentication(config configs.ConfigLoader, logger log.Logger) func(inner h
 	return func(inner http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			logger.Debugf("request on endpoint: %s", r.URL.String())
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 			if exemptPath(r) {
 				inner.ServeHTTP(w, r)
 				return
 			}
 
-			cookie, err := r.Cookie("auth-token")
-			if err != nil || cookie == nil {
-				logger.Error("cannot fetch auth-token; cookie missing")
-				handlers.WriteError(w, errors.AuthError{Message: "cannot fetch auth-token; cookie missing"})
+			authHeader := strings.Split(r.Header.Get("Authorization"), " ")
+			if len(authHeader) != 2 {
+				logger.Errorf("invalid auth-header: %v", authHeader)
+				response.WriteError(w, errors.AuthError{Message: "cannot fetch auth-token; invalid auth-header"}, logger)
+
 				return
 			}
 
-			jwtToken := cookie.Value
+			jwtToken := authHeader[1]
 
 			claim, err := auth.ParseToken(config, jwtToken)
 			if err != nil {
 				logger.Error(err)
-				handlers.SetHeader(w, err)
+				response.SetHeader(w, err, logger)
 
 				return
 			}
