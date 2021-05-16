@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -19,7 +20,7 @@ type MongoConfigs struct {
 	Database string
 }
 
-func (c MongoConfigs) ConnectToMongo() (*mongo.Database, error) {
+func (c MongoConfigs) ConnectToMongo(logger log.Logger) (*mongo.Database, error) {
 	var connectionString string
 
 	if c.Username != "" && c.Password != "" {
@@ -37,11 +38,13 @@ func (c MongoConfigs) ConnectToMongo() (*mongo.Database, error) {
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
+		logger.Fatalf("cannot connect to  mongo: %v", err)
 		return nil, err
 	}
 
 	err = client.Ping(ctx, nil)
 	if err != nil {
+		logger.Fatalf("error in pinging mongo client: %v", err)
 		return nil, err
 	}
 
