@@ -2,17 +2,20 @@ package account
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"time"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/handlers"
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/response"
 	"github.com/Aakanksha-jais/picshot-golang-backend/services"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"time"
 )
 
 type account struct {
@@ -30,15 +33,15 @@ func New(service services.Account, logger log.Logger, config configs.ConfigLoade
 }
 
 func (a account) LogIn(w http.ResponseWriter, r *http.Request) {
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(30 * time.Minute)
 
-	body, err := readUser(w, r.Body)
+	body, err := readUser(w, r.Body, a.logger)
 	if err != nil {
 		a.logger.Errorf("error in reading request body: %v", err)
 		return
 	}
 
-	user, err := unmarshalUser(w, body)
+	user, err := unmarshalUser(w, body, a.logger)
 	if err != nil {
 		a.logger.Errorf("error in unmarshalling request body %v", err)
 		return
@@ -46,30 +49,32 @@ func (a account) LogIn(w http.ResponseWriter, r *http.Request) {
 
 	account, err := a.service.Get(r.Context(), user)
 	if err != nil {
-		handlers.SetHeader(w, err)
-	}
+		response.SetHeader(w, err, a.logger)
 
-	// Create a JWT Token
-	token, err := generateToken(expirationTime, account.ID, a.config)
-	handlers.SetHeader(w, err) // Set Header to StatusOK if err is nil
-
-	if err != nil {
 		return
 	}
 
-	setCookie(w, token, expirationTime)
+	token, err := generateToken(expirationTime, account.ID, a.config)
+	if err != nil {
+		a.logger.Errorf("error in generating token: %v", err)
+	} else {
+		a.logger.Infof("token generated successfully: %v, expires at: %v", token[:10], expirationTime.Format(time.RFC850))
+		setAuthHeader(w, token)
+	}
+
+	response.SetHeader(w, err, a.logger) // Set Header to StatusOK if err is nil
 }
 
 func (a account) SignUp(w http.ResponseWriter, r *http.Request) {
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(30 * time.Minute)
 
-	body, err := readUser(w, r.Body)
+	body, err := readUser(w, r.Body, a.logger)
 	if err != nil {
 		a.logger.Errorf("error in reading request body: %v", err)
 		return
 	}
 
-	user, err := unmarshalUser(w, body)
+	user, err := unmarshalUser(w, body, a.logger)
 	if err != nil {
 		a.logger.Errorf("error in unmarshalling request body %v", err)
 		return
@@ -78,29 +83,29 @@ func (a account) SignUp(w http.ResponseWriter, r *http.Request) {
 	// Create an Account based on User Details Provided
 	account, err := a.service.Create(r.Context(), user)
 	if err != nil {
-		handlers.SetHeader(w, err)
+		response.SetHeader(w, err, a.logger)
+
+		return
 	}
 
 	// Create a JWT Token
 	token, err := generateToken(expirationTime, account.ID, a.config)
 	if err != nil {
-		handlers.SetHeader(w, err)
+		a.logger.Errorf("error in generating token: %v", err)
+		response.SetHeader(w, err, a.logger)
+
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	a.logger.Infof("token generated successfully: %v, expiration: %v", token[:10], expirationTime)
 
-	setCookie(w, token, expirationTime)
+	setAuthHeader(w, token)
+
+	w.WriteHeader(http.StatusCreated)
 }
 
-func setCookie(w http.ResponseWriter, token string, exp time.Time) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "auth-token",
-		Value:    token,
-		Expires:  exp,
-		HttpOnly: true,
-		Secure:   true,
-	})
+func setAuthHeader(w http.ResponseWriter, token string) {
+	w.Header().Add("Authorization", fmt.Sprintf("bearer %s", token))
 }
 
 func generateToken(exp time.Time, userID int64, config configs.ConfigLoader) (string, error) {
@@ -112,10 +117,10 @@ func generateToken(exp time.Time, userID int64, config configs.ConfigLoader) (st
 	return token, nil
 }
 
-func readUser(w http.ResponseWriter, reqBody io.ReadCloser) ([]byte, error) {
+func readUser(w http.ResponseWriter, reqBody io.ReadCloser, logger log.Logger) ([]byte, error) {
 	body, err := ioutil.ReadAll(reqBody)
 	if err != nil {
-		handlers.SetHeader(w, errors.Error{Err: err, Type: "body-read-error", Message: "error in reading request body"})
+		response.SetHeader(w, errors.Error{Err: err, Type: "body-read-error", Message: "error in reading request body"}, logger)
 
 		return nil, err
 	}
@@ -123,13 +128,13 @@ func readUser(w http.ResponseWriter, reqBody io.ReadCloser) ([]byte, error) {
 	return body, nil
 }
 
-func unmarshalUser(w http.ResponseWriter, body []byte) (*models.User, error) {
+func unmarshalUser(w http.ResponseWriter, body []byte, logger log.Logger) (*models.User, error) {
 	var user models.User
 
 	err := json.Unmarshal(body, &user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		handlers.WriteError(w, errors.Error{Err: err, Type: "unmarshal-error", Message: "invalid request body"})
+		response.WriteError(w, errors.Error{Err: err, Type: "unmarshal-error", Message: "invalid request body"}, logger)
 
 		return nil, err
 	}
