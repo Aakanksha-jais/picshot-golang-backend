@@ -1,6 +1,8 @@
 package configs
 
 import (
+	"fmt"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 	"os"
 
@@ -8,22 +10,35 @@ import (
 )
 
 type ConfigLoader struct {
-	configFolderPath string
-	logger           log.Logger
 }
 
-func NewConfigLoader(configFolderPath string, logger log.Logger) ConfigLoader {
-	configFile := configFolderPath + "/.env"
+func NewConfigLoader(confLocation string) (ConfigLoader, error) {
+	log := log.NewLogger()
 
-	err := godotenv.Load(configFile)
+	defaultFile := confLocation + "/.env"
 
-	if err != nil {
-		logger.Errorf("cannot load config from %s, error: %s", configFile, err)
-		return ConfigLoader{}
+	env := os.Getenv("ENV")
+	if env == "" {
+		env = "local"
+	}
+	overrideFile := confLocation + "/." + env + ".env"
+
+	err1 := godotenv.Load(overrideFile)
+	if err1 == nil {
+		log.Infof("loaded config from file: %s", overrideFile)
 	}
 
-	logger.Infof("loading configs from  file %s", configFile)
-	return ConfigLoader{configFolderPath: configFolderPath, logger: logger}
+	err2 := godotenv.Load(defaultFile)
+	if err2 == nil {
+		log.Infof("loaded config from file: %s", defaultFile)
+	}
+
+	if err1 != nil && err2 != nil {
+		log.Fatalf("cannot load configs from folder: %s", confLocation)
+		return ConfigLoader{}, errors.Error{Message: fmt.Sprintf("cannot load configs from folder: %s", confLocation)}
+	}
+
+	return ConfigLoader{}, nil
 }
 
 func (c ConfigLoader) Get(key string) string {

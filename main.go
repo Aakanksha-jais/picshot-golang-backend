@@ -18,19 +18,19 @@ import (
 )
 
 func main() {
-
-	logger := log.NewLogger()
-	config := configs.NewConfigLoader("./configs", logger)
-
-	mongoDB, err := driver.NewMongoConfigs(config).ConnectToMongo()
+	config, err := configs.NewConfigLoader("./configs")
 	if err != nil {
-		logger.Fatalf("cannot connect to  mongo %v", err)
 		return
 	}
 
-	sqlDB, err := driver.NewSQLConfigs(config).ConnectToSQL()
+	logger := log.NewLogger()
+	mongoDB, err := driver.NewMongoConfigs(config).ConnectToMongo(logger)
 	if err != nil {
-		logger.Fatalf("cannot connect to sql %v", err)
+		return
+	}
+
+	sqlDB, err := driver.NewSQLConfigs(config).ConnectToSQL(logger)
+	if err != nil {
 		return
 	}
 
@@ -60,5 +60,7 @@ func main() {
 		Addr:    fmt.Sprintf("localhost:%s", config.Get("HTTP_PORT")),
 	}
 
-	logger.Fatalf("error in starting the server: ", server.ListenAndServe())
+	logger.Infof("starting server at PORT: %v", config.Get("HTTP_PORT"))
+
+	logger.Fatalf("error in starting the server: %v", server.ListenAndServe())
 }
