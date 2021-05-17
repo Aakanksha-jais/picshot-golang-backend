@@ -24,7 +24,7 @@ func New(db *sql.DB, logger log.Logger) stores.Account {
 const (
 	getAll = "SELECT id, user_name, email, f_name, l_name, phone_no, created_at, pwd_update, del_req, status FROM accounts WHERE "
 	get    = "SELECT id, user_name, email, password, f_name, l_name, phone_no, created_at, pwd_update, del_req, status FROM accounts WHERE "
-	insert = "INSERT INTO accounts( user_name, password, email, f_name, l_name, phone_no, pwd_update, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
+	insert = "INSERT INTO accounts( user_name, password, email, f_name, l_name, phone_no, status) VALUES(?, ?, ?, ?, ?, ?, ?)"
 )
 
 // GetAll retrieves all accounts that match the given filter.
@@ -86,7 +86,7 @@ func (a account) Get(ctx context.Context, filter *models.Account) (*models.Accou
 
 // Create creates an account.
 func (a account) Create(ctx context.Context, model *models.Account) (*models.Account, error) {
-	res, err := a.db.ExecContext(ctx, insert, model.UserName, model.Password, model.Email, model.FName, model.LName, model.PhoneNo, time.Now(), model.Status)
+	res, err := a.db.ExecContext(ctx, insert, model.UserName, model.Password, model.Email, model.FName, model.LName, model.PhoneNo, model.Status)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
