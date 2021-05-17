@@ -10,7 +10,7 @@ VALUES ("mainak_pandit", "$2a$10$PFaxwsavIJuQEqga4tFMQ.oofBlx6qE/RebQVHdofxXKcvJ
 
 -- password: demo123
 INSERT INTO `accounts` (`user_name`, `password`, `email` , `f_name`, `l_name`, `phone_no` , `status`)
-VALUES ("divij_gupta", "$2a$10$PFaxwsavIJuQEqga4tFMQ.oofBlx6qE/RebQVHdofxXKcvJbAc0xW", "divijgupta@gmail.com" , "Divij", "Gupta", "7500823463" , "ACTIVE");
+VALUES ("divij_gupta", "$2a$10$PFaxwsavIJuQEqga4tFMQ.oofBlx6qE/RebQVHdofxXKcvJbAc0xW", "divijgupta@gmail.com" , "Divij", "Gupta", "9682622125" , "ACTIVE");
 
 -- run the following commands from project root:
 -- sudo mysql -u root < db/schema.sql

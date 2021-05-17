@@ -48,6 +48,7 @@ func (c MongoConfigs) ConnectToMongo(logger log.Logger) (*mongo.Database, error)
 		return nil, err
 	}
 
+	logger.Infof("connected to mongo: %v@%v at port: %v", c.Username, c.HostName, c.Port)
 	return client.Database(c.Database), nil
 }
 
