@@ -24,6 +24,9 @@ type Account interface {
 
 	// Get gets an account by the User Details filter.
 	Get(ctx context.Context, user *models.User) (*models.Account, error)
+
+	// CheckAvailability checks if username, phone number and email exist in the database already.
+	CheckAvailability(ctx context.Context, user models.User) error
 }
 
 type Blog interface {

@@ -35,6 +35,20 @@ func (m *MockAccount) EXPECT() *MockAccountMockRecorder {
 	return m.recorder
 }
 
+// CheckAvailability mocks base method.
+func (m *MockAccount) CheckAvailability(ctx context.Context, user models.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckAvailability", ctx, user)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CheckAvailability indicates an expected call of CheckAvailability.
+func (mr *MockAccountMockRecorder) CheckAvailability(ctx, user interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckAvailability", reflect.TypeOf((*MockAccount)(nil).CheckAvailability), ctx, user)
+}
+
 // Create mocks base method.
 func (m *MockAccount) Create(ctx context.Context, user *models.User) (*models.Account, error) {
 	m.ctrl.T.Helper()
