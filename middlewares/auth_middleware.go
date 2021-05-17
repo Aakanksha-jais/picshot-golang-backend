@@ -27,7 +27,7 @@ func Authentication(config configs.ConfigLoader, logger log.Logger) func(inner h
 			authHeader := strings.Split(r.Header.Get("Authorization"), " ")
 			if len(authHeader) != 2 {
 				logger.Errorf("invalid auth-header: %v", authHeader)
-				response.WriteError(w, errors.AuthError{Message: "cannot fetch auth-token; invalid auth-header"}, logger)
+				response.WriteResponse(w, errors.AuthError{Message: "cannot fetch auth-token; invalid auth-header"}, logger)
 
 				return
 			}
@@ -53,5 +53,5 @@ func Authentication(config configs.ConfigLoader, logger log.Logger) func(inner h
 
 func exemptPath(req *http.Request) bool {
 	url := req.URL.Path
-	return strings.HasSuffix(url, "/login") || strings.HasSuffix(url, "/signup")
+	return strings.HasSuffix(url, "/login") || strings.HasSuffix(url, "/signup") || strings.HasSuffix(url, "/available")
 }
