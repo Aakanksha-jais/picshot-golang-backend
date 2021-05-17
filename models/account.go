@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -14,16 +15,6 @@ type Account struct {
 	CreatedAt  time.Time    `json:"created_at"` // Time of Creation of Account
 	DelRequest sql.NullTime `json:"del_req"`    // Time Stamp of Account Delete Request
 	Status     string       `json:"status"`     // Account Active or Inactive
-}
-
-type User struct {
-	ID       int64          `json:"-"`         // Unique User ID
-	UserName string         `json:"user_name"` // Username
-	FName    string         `json:"f_name"`    // First Name
-	LName    string         `json:"l_name"`    // Last Name
-	Email    sql.NullString `json:"email"`     // Email
-	PhoneNo  sql.NullString `json:"phone_no"`  // Phone Number
-	Password string         `json:"password"`  // Password
 }
 
 const (
@@ -84,4 +75,12 @@ func (a *Account) WhereClause() (whereClause string, queryParams []interface{}) 
 	whereClause = strings.Join(columnList, `= ? and `) + `= ? `
 
 	return whereClause, queryParams
+}
+
+func (a Account) String() string {
+	if a.ID != 0 {
+		return fmt.Sprintf("Account: %v %v, (Username: %v and ID: %v)", a.FName, a.LName, a.UserName, a.ID)
+	}
+
+	return fmt.Sprintf("Account: %v %v, (Username: %v)", a.FName, a.LName, a.UserName)
 }
