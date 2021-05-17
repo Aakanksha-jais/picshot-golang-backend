@@ -7,12 +7,11 @@ import (
 	"net/http"
 )
 
-func WriteError(w http.ResponseWriter, err error, log log.Logger) {
+func WriteResponse(w http.ResponseWriter, err error, log log.Logger) {
 	var errType string
 
-	log.Error(err)
-
 	switch err.(type) {
+	case nil:
 	case errors.DBError:
 		errType = "db-error"
 	case errors.MissingParam:
@@ -25,19 +24,33 @@ func WriteError(w http.ResponseWriter, err error, log log.Logger) {
 		errType = "auth-error"
 	case errors.Error:
 		errType = err.(errors.Error).Type
-	case nil:
-		return
+	case errors.EntityAlreadyExists:
+		errType = "entity-already-exists"
 	}
 
-	e := struct {
-		Msg  string `json:"error,omitempty"`
-		Type string `json:"type,omitempty"`
-	}{
-		Msg:  err.Error(),
-		Type: errType,
+	var result interface{}
+
+	if err == nil {
+		result = struct {
+			Status string `json:"status"`
+		}{
+			Status: "success",
+		}
+	} else {
+		result = struct {
+			Status string `json:"status"`
+			Msg    string `json:"error,omitempty"`
+			Type   string `json:"type,omitempty"`
+		}{
+			Status: "failure",
+			Msg:    err.Error(),
+			Type:   errType,
+		}
+
+		log.Error(err)
 	}
 
-	resp, _ := json.Marshal(e)
+	resp, _ := json.Marshal(result)
 
 	w.Write(resp)
 }
@@ -46,7 +59,7 @@ func SetHeader(w http.ResponseWriter, err error, log log.Logger) {
 	switch err.(type) {
 	case errors.DBError, errors.Error:
 		w.WriteHeader(http.StatusInternalServerError)
-	case errors.MissingParam, errors.InvalidParam:
+	case errors.MissingParam, errors.InvalidParam, errors.EntityAlreadyExists:
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.EntityNotFound:
 		w.WriteHeader(http.StatusNotFound)
@@ -54,8 +67,7 @@ func SetHeader(w http.ResponseWriter, err error, log log.Logger) {
 		w.WriteHeader(http.StatusUnauthorized)
 	case nil:
 		w.WriteHeader(http.StatusOK)
-		return
 	}
 
-	WriteError(w, err, log)
+	WriteResponse(w, err, log)
 }

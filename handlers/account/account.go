@@ -1,6 +1,7 @@
 package account
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -65,6 +66,15 @@ func (a account) LogIn(w http.ResponseWriter, r *http.Request) {
 	response.SetHeader(w, err, a.logger) // Set Header to StatusOK if err is nil
 }
 
+func (a account) CheckAvailability(w http.ResponseWriter, r *http.Request) {
+	username := r.URL.Query().Get("username")
+	email := r.URL.Query().Get("email")
+	phone := r.URL.Query().Get("phone")
+
+	err := a.service.CheckAvailability(r.Context(), models.User{UserName: username, PhoneNo: sql.NullString{String: phone, Valid: true}, Email: sql.NullString{String: email, Valid: true}})
+	response.SetHeader(w, err, a.logger)
+}
+
 func (a account) SignUp(w http.ResponseWriter, r *http.Request) {
 	expirationTime := time.Now().Add(30 * time.Minute)
 
@@ -79,6 +89,8 @@ func (a account) SignUp(w http.ResponseWriter, r *http.Request) {
 		a.logger.Errorf("error in unmarshalling request body %v", err)
 		return
 	}
+
+	a.logger.Debugf("signup request for %v", user)
 
 	// Create an Account based on User Details Provided
 	account, err := a.service.Create(r.Context(), user)
@@ -97,11 +109,12 @@ func (a account) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.logger.Infof("token generated successfully: %v, expiration: %v", token[:10], expirationTime)
+	a.logger.Infof("token generated successfully: %v, expiration: %v", token[:10], expirationTime.Format(time.RFC850))
 
 	setAuthHeader(w, token)
 
 	w.WriteHeader(http.StatusCreated)
+	response.WriteResponse(w, nil, a.logger)
 }
 
 func setAuthHeader(w http.ResponseWriter, token string) {
@@ -134,7 +147,7 @@ func unmarshalUser(w http.ResponseWriter, body []byte, logger log.Logger) (*mode
 	err := json.Unmarshal(body, &user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		response.WriteError(w, errors.Error{Err: err, Type: "unmarshal-error", Message: "invalid request body"}, logger)
+		response.WriteResponse(w, errors.Error{Err: err, Type: "unmarshal-error", Message: "invalid request body"}, logger)
 
 		return nil, err
 	}
