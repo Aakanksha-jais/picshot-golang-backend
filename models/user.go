@@ -6,13 +6,13 @@ import (
 )
 
 type User struct {
-	ID       int64          `json:"-"`         // Unique User ID
-	UserName string         `json:"user_name"` // Username
-	FName    string         `json:"f_name"`    // First Name
-	LName    string         `json:"l_name"`    // Last Name
-	Email    sql.NullString `json:"email"`     // Email
-	PhoneNo  sql.NullString `json:"phone_no"`  // Phone Number
-	Password string         `json:"password"`  // Password
+	ID       int64          `json:"-"`                  // Unique User ID
+	UserName string         `json:"user_name"`          // Username
+	FName    string         `json:"f_name"`             // First Name
+	LName    string         `json:"l_name"`             // Last Name
+	Email    sql.NullString `json:"email,omitempty"`    // Email
+	PhoneNo  sql.NullString `json:"phone_no,omitempty"` // Phone Number
+	Password string         `json:"password,omitempty"` // Password
 }
 
 func (u User) String() string {

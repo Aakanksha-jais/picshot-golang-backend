@@ -9,12 +9,12 @@ import (
 )
 
 type Account struct {
-	User                    // Details of the User
-	PwdUpdate  sql.NullTime `json:"pwd_update"` // Time Stamp of most recent Password Update
-	Blogs      []Blog       `json:"blogs"`      // List of Blogs posted by Account
-	CreatedAt  time.Time    `json:"created_at"` // Time of Creation of Account
-	DelRequest sql.NullTime `json:"del_req"`    // Time Stamp of Account Delete Request
-	Status     string       `json:"status"`     // Account Active or Inactive
+	User                     // Details of the User
+	PwdUpdate  *sql.NullTime `json:"pwd_update,omitempty"` // Time Stamp of most recent Password Update
+	Blogs      []Blog        `json:"blogs,omitempty"`      // List of Blogs posted by Account
+	CreatedAt  time.Time     `json:"created_at"`           // Time of Creation of Account
+	DelRequest *sql.NullTime `json:"del_req,omitempty"`    // Time Stamp of Account Delete Request
+	Status     string        `json:"status"`               // Account Active or Inactive
 }
 
 const (
