@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+type JWTContextKey string
+
 type Claims struct {
 	jwt.StandardClaims
 	UserID int64 `json:"user_id"`
@@ -53,8 +55,10 @@ func ParseToken(config configs.ConfigLoader, signedToken string) (*Claims, error
 		return []byte(config.Get("ACCESS_KEY")), nil
 	})
 
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-		return claims, nil
+	if err == nil && token != nil {
+		if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+			return claims, nil
+		}
 	}
 
 	return nil, errors.AuthError{Message: "invalid token", Err: err}

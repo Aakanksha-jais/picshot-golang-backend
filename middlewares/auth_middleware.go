@@ -11,8 +11,6 @@ import (
 	"strings"
 )
 
-type JWTContextKey string
-
 func Authentication(config configs.ConfigLoader, logger log.Logger) func(inner http.Handler) http.Handler {
 	return func(inner http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +25,7 @@ func Authentication(config configs.ConfigLoader, logger log.Logger) func(inner h
 			authHeader := strings.Split(r.Header.Get("Authorization"), " ")
 			if len(authHeader) != 2 {
 				logger.Errorf("invalid auth-header: %v", authHeader)
-				response.WriteResponse(w, errors.AuthError{Message: "cannot fetch auth-token; invalid auth-header"}, logger)
+				response.WriteResponse(w, errors.AuthError{Message: "cannot fetch auth-token; invalid auth-header"}, nil, logger)
 
 				return
 			}
@@ -37,12 +35,12 @@ func Authentication(config configs.ConfigLoader, logger log.Logger) func(inner h
 			claim, err := auth.ParseToken(config, jwtToken)
 			if err != nil {
 				logger.Error(err)
-				response.SetHeader(w, err, logger)
+				response.SetHeader(w, err, nil, logger)
 
 				return
 			}
 
-			jwtIDKey := JWTContextKey("user_id")
+			jwtIDKey := auth.JWTContextKey("user_id")
 			r = r.WithContext(context.WithValue(r.Context(), jwtIDKey, claim.UserID))
 			logger.Infof("user_id: %v authorised.", r.Context().Value(jwtIDKey))
 
