@@ -78,19 +78,19 @@ func (mr *MockAccountMockRecorder) Delete(ctx, id interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockAccount)(nil).Delete), ctx, id)
 }
 
-// Get mocks base method.
-func (m *MockAccount) Get(ctx context.Context, user *models.User) (*models.Account, error) {
+// GetAccountWithBlogs mocks base method.
+func (m *MockAccount) GetAccountWithBlogs(ctx context.Context, username string) (*models.Account, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx, user)
+	ret := m.ctrl.Call(m, "GetAccountWithBlogs", ctx, username)
 	ret0, _ := ret[0].(*models.Account)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Get indicates an expected call of Get.
-func (mr *MockAccountMockRecorder) Get(ctx, user interface{}) *gomock.Call {
+// GetAccountWithBlogs indicates an expected call of GetAccountWithBlogs.
+func (mr *MockAccountMockRecorder) GetAccountWithBlogs(ctx, username interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAccount)(nil).Get), ctx, user)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountWithBlogs", reflect.TypeOf((*MockAccount)(nil).GetAccountWithBlogs), ctx, username)
 }
 
 // GetAll mocks base method.
@@ -109,18 +109,33 @@ func (mr *MockAccountMockRecorder) GetAll(ctx, filter interface{}) *gomock.Call 
 }
 
 // GetByID mocks base method.
-func (m *MockAccount) GetByID(ctx context.Context, filter *models.Account) (*models.Account, error) {
+func (m *MockAccount) GetByID(ctx context.Context, id int64) (*models.Account, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByID", ctx, filter)
+	ret := m.ctrl.Call(m, "GetByID", ctx, id)
 	ret0, _ := ret[0].(*models.Account)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByID indicates an expected call of GetByID.
-func (mr *MockAccountMockRecorder) GetByID(ctx, filter interface{}) *gomock.Call {
+func (mr *MockAccountMockRecorder) GetByID(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockAccount)(nil).GetByID), ctx, filter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockAccount)(nil).GetByID), ctx, id)
+}
+
+// Login mocks base method.
+func (m *MockAccount) Login(ctx context.Context, user *models.User) (*models.Account, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Login", ctx, user)
+	ret0, _ := ret[0].(*models.Account)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Login indicates an expected call of Login.
+func (mr *MockAccountMockRecorder) Login(ctx, user interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockAccount)(nil).Login), ctx, user)
 }
 
 // Update mocks base method.

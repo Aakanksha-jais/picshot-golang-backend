@@ -30,11 +30,35 @@ func (a account) GetAll(ctx context.Context, filter *models.Account) ([]*models.
 	return a.accountStore.GetAll(ctx, filter)
 }
 
-// GetByID fetches an account with all the blogs posted by the account.
-func (a account) GetByID(ctx context.Context, filter *models.Account) (*models.Account, error) {
-	account, err := a.accountStore.Get(ctx, filter)
+func (a account) GetByID(ctx context.Context, id int64) (*models.Account, error) {
+	account, err := a.accountStore.Get(ctx, &models.Account{User: models.User{ID: id}})
 	if err != nil {
 		return nil, err
+	}
+
+	if account == nil {
+		return nil, errors.EntityNotFound{Entity: "user"}
+	}
+
+	account.Password = ""
+
+	return account, nil
+}
+
+// GetAccountWithBlogs fetches an account with all the blogs posted by the account.
+func (a account) GetAccountWithBlogs(ctx context.Context, username string) (*models.Account, error) {
+	err := validateUsername(username)
+	if err != nil {
+		return nil, err
+	}
+
+	account, err := a.accountStore.Get(ctx, &models.Account{User: models.User{UserName: username}})
+	if err != nil {
+		return nil, err
+	}
+
+	if account == nil {
+		return nil, errors.EntityNotFound{Entity: "user"}
 	}
 
 	blogs, err := a.blogService.GetAll(ctx, models.Blog{AccountID: account.ID})
@@ -44,6 +68,8 @@ func (a account) GetByID(ctx context.Context, filter *models.Account) (*models.A
 			account.Blogs = append(account.Blogs, *blogs[i])
 		}
 	}
+
+	account.Password = ""
 
 	return account, nil
 }
@@ -140,10 +166,33 @@ func (a account) CheckAvailability(ctx context.Context, user models.User) error 
 	return nil
 }
 
-// Get gets an account by the User Details filter.
-func (a account) Get(ctx context.Context, user *models.User) (*models.Account, error) {
+// Login gets an account by the User Details filter.
+func (a account) Login(ctx context.Context, user *models.User) (*models.Account, error) {
 	if user == nil {
 		return nil, errors.MissingParam{Param: "user details"}
+	}
+
+	if user.UserName == "" && user.Email.String == "" && user.PhoneNo.String == "" {
+		return nil, errors.MissingParam{Param: "login_id"}
+	}
+
+	if user.UserName != "" {
+		err := validateUsername(user.UserName)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if user.Email.String != "" {
+		if err := validateEmail(user.Email.String); err != nil {
+			return nil, err
+		}
+	}
+
+	if user.PhoneNo.String != "" {
+		if err := validatePhone(user.PhoneNo.String); err != nil {
+			return nil, err
+		}
 	}
 
 	account, err := a.accountStore.Get(ctx, &models.Account{User: *user})

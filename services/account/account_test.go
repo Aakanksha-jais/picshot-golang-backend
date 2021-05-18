@@ -72,7 +72,7 @@ func TestServices_Account_Get(t *testing.T) {
 	}
 
 	for i := range tests {
-		output, err := s.Get(context.TODO(), tests[i].input)
+		output, err := s.Login(context.TODO(), tests[i].input)
 
 		assert.Equal(t, tests[i].output, output, "TEST [%v], failed.\n%s", i+1, tests[i].description)
 
