@@ -3,9 +3,11 @@ package handlers
 import "net/http"
 
 type Account interface {
-	LogIn(w http.ResponseWriter, r *http.Request)
-	SignUp(w http.ResponseWriter, r *http.Request)
-	LogOut(w http.ResponseWriter, r *http.Request)
+	Login(w http.ResponseWriter, r *http.Request)
+	Signup(w http.ResponseWriter, r *http.Request)
+	Logout(w http.ResponseWriter, r *http.Request)
+	Get(w http.ResponseWriter, r *http.Request)
+	Update(w http.ResponseWriter, r *http.Request)
 	CheckAvailability(w http.ResponseWriter, r *http.Request)
 }
 

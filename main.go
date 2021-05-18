@@ -47,12 +47,16 @@ func main() {
 
 	r := mux.NewRouter()
 
-	// Routes
-	r.HandleFunc("/login", accountHandler.LogIn).Methods(http.MethodPost)
-	r.HandleFunc("/signup", accountHandler.SignUp).Methods(http.MethodPost)
+	// Routes for Accounts
+	r.HandleFunc("/login", accountHandler.Login).Methods(http.MethodPost)
+	r.HandleFunc("/signup", accountHandler.Signup).Methods(http.MethodPost)
+	r.HandleFunc("/myaccount", accountHandler.Get).Methods(http.MethodGet)
+	r.HandleFunc("/myaccount", accountHandler.Update).Methods(http.MethodPut)
 	r.HandleFunc("/available", accountHandler.CheckAvailability).Queries("username", "{username}").Methods(http.MethodGet)
 	r.HandleFunc("/available", accountHandler.CheckAvailability).Queries("email", "{email}").Methods(http.MethodGet)
 	r.HandleFunc("/available", accountHandler.CheckAvailability).Queries("phone", "{phone}").Methods(http.MethodGet)
+
+	// Routes for Blogs
 	r.HandleFunc("/blogs", blogHandler.GetAll).Methods(http.MethodGet)
 
 	// Middlewares

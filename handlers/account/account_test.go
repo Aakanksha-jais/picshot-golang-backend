@@ -62,7 +62,7 @@ func TestHandler_Account_Signup(t *testing.T) {
 	for _, tc := range tests {
 		r := httptest.NewRequest(http.MethodPost, "/signup", bytes.NewBuffer(tc.body))
 		w := httptest.NewRecorder()
-		s.SignUp(w, r)
+		s.Signup(w, r)
 
 		resp, _ := ioutil.ReadAll(w.Body)
 

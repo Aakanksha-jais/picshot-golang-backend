@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func WriteResponse(w http.ResponseWriter, err error, log log.Logger) {
+func WriteResponse(w http.ResponseWriter, err error, resp interface{}, log log.Logger) {
 	var errType string
 
 	switch err.(type) {
@@ -32,30 +32,37 @@ func WriteResponse(w http.ResponseWriter, err error, log log.Logger) {
 
 	if err == nil {
 		result = struct {
-			Status string `json:"status"`
+			Status string      `json:"status"`
+			Data   interface{} `json:"data,omitempty"`
 		}{
 			Status: "success",
+			Data:   resp,
 		}
 	} else {
+		type Err struct {
+			Msg  string `json:"msg,omitempty"`
+			Type string `json:"type,omitempty"`
+		}
 		result = struct {
 			Status string `json:"status"`
-			Msg    string `json:"error,omitempty"`
-			Type   string `json:"type,omitempty"`
+			Err    Err    `json:"error"`
 		}{
 			Status: "failure",
-			Msg:    err.Error(),
-			Type:   errType,
+			Err: Err{
+				Msg:  err.Error(),
+				Type: errType,
+			},
 		}
 
 		log.Error(err)
 	}
 
-	resp, _ := json.Marshal(result)
+	response, _ := json.Marshal(result)
 
-	w.Write(resp)
+	w.Write(response)
 }
 
-func SetHeader(w http.ResponseWriter, err error, log log.Logger) {
+func SetHeader(w http.ResponseWriter, err error, resp interface{}, log log.Logger) {
 	switch err.(type) {
 	case errors.DBError, errors.Error:
 		w.WriteHeader(http.StatusInternalServerError)
@@ -69,5 +76,5 @@ func SetHeader(w http.ResponseWriter, err error, log log.Logger) {
 		w.WriteHeader(http.StatusOK)
 	}
 
-	WriteResponse(w, err, log)
+	WriteResponse(w, err, resp, log)
 }

@@ -33,7 +33,7 @@ func New(service services.Account, logger log.Logger, config configs.ConfigLoade
 	}
 }
 
-func (a account) LogIn(w http.ResponseWriter, r *http.Request) {
+func (a account) Login(w http.ResponseWriter, r *http.Request) {
 	expirationTime := time.Now().Add(30 * time.Minute)
 
 	body, err := readUser(w, r.Body, a.logger)
@@ -48,9 +48,9 @@ func (a account) LogIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, err := a.service.Get(r.Context(), user)
+	account, err := a.service.Login(r.Context(), user)
 	if err != nil {
-		response.SetHeader(w, err, a.logger)
+		response.SetHeader(w, err, nil, a.logger)
 
 		return
 	}
@@ -63,7 +63,7 @@ func (a account) LogIn(w http.ResponseWriter, r *http.Request) {
 		setAuthHeader(w, token)
 	}
 
-	response.SetHeader(w, err, a.logger) // Set Header to StatusOK if err is nil
+	response.SetHeader(w, err, nil, a.logger) // Set Header to StatusOK if err is nil
 }
 
 func (a account) CheckAvailability(w http.ResponseWriter, r *http.Request) {
@@ -72,10 +72,10 @@ func (a account) CheckAvailability(w http.ResponseWriter, r *http.Request) {
 	phone := r.URL.Query().Get("phone")
 
 	err := a.service.CheckAvailability(r.Context(), models.User{UserName: username, PhoneNo: sql.NullString{String: phone, Valid: true}, Email: sql.NullString{String: email, Valid: true}})
-	response.SetHeader(w, err, a.logger)
+	response.SetHeader(w, err, nil, a.logger)
 }
 
-func (a account) SignUp(w http.ResponseWriter, r *http.Request) {
+func (a account) Signup(w http.ResponseWriter, r *http.Request) {
 	expirationTime := time.Now().Add(30 * time.Minute)
 
 	body, err := readUser(w, r.Body, a.logger)
@@ -95,7 +95,7 @@ func (a account) SignUp(w http.ResponseWriter, r *http.Request) {
 	// Create an Account based on User Details Provided
 	account, err := a.service.Create(r.Context(), user)
 	if err != nil {
-		response.SetHeader(w, err, a.logger)
+		response.SetHeader(w, err, nil, a.logger)
 
 		return
 	}
@@ -104,7 +104,7 @@ func (a account) SignUp(w http.ResponseWriter, r *http.Request) {
 	token, err := generateToken(expirationTime, account.ID, a.config)
 	if err != nil {
 		a.logger.Errorf("error in generating token: %v", err)
-		response.SetHeader(w, err, a.logger)
+		response.SetHeader(w, err, nil, a.logger)
 
 		return
 	}
@@ -114,11 +114,20 @@ func (a account) SignUp(w http.ResponseWriter, r *http.Request) {
 	setAuthHeader(w, token)
 
 	w.WriteHeader(http.StatusCreated)
-	response.WriteResponse(w, nil, a.logger)
+	response.WriteResponse(w, nil, nil, a.logger)
+}
+
+func (a account) Get(w http.ResponseWriter, r *http.Request) {
+	id := r.Context().Value(auth.JWTContextKey("user_id"))
+	a.logger.Debugf("user with id: %v is logged in", id)
+
+	account, err := a.service.GetByID(r.Context(), id.(int64))
+
+	response.SetHeader(w, err, account, a.logger)
 }
 
 func setAuthHeader(w http.ResponseWriter, token string) {
-	w.Header().Add("Authorization", fmt.Sprintf("bearer %s", token))
+	w.Header().Add("Authorization", fmt.Sprintf("Bearer %s", token))
 }
 
 func generateToken(exp time.Time, userID int64, config configs.ConfigLoader) (string, error) {
@@ -133,7 +142,7 @@ func generateToken(exp time.Time, userID int64, config configs.ConfigLoader) (st
 func readUser(w http.ResponseWriter, reqBody io.ReadCloser, logger log.Logger) ([]byte, error) {
 	body, err := ioutil.ReadAll(reqBody)
 	if err != nil {
-		response.SetHeader(w, errors.Error{Err: err, Type: "body-read-error", Message: "error in reading request body"}, logger)
+		response.SetHeader(w, errors.Error{Err: err, Type: "body-read-error", Message: "error in reading request body"}, nil, logger)
 
 		return nil, err
 	}
@@ -147,7 +156,7 @@ func unmarshalUser(w http.ResponseWriter, body []byte, logger log.Logger) (*mode
 	err := json.Unmarshal(body, &user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		response.WriteResponse(w, errors.Error{Err: err, Type: "unmarshal-error", Message: "invalid request body"}, logger)
+		response.WriteResponse(w, errors.Error{Err: err, Type: "unmarshal-error", Message: "invalid request body"}, nil, logger)
 
 		return nil, err
 	}
@@ -155,5 +164,8 @@ func unmarshalUser(w http.ResponseWriter, body []byte, logger log.Logger) (*mode
 	return &user, nil
 }
 
-func (a account) LogOut(w http.ResponseWriter, r *http.Request) {
+func (a account) Logout(w http.ResponseWriter, r *http.Request) {
+}
+
+func (a account) Update(w http.ResponseWriter, r *http.Request) {
 }
