@@ -67,7 +67,7 @@ func (mr *MockAccountMockRecorder) Delete(ctx, id interface{}) *gomock.Call {
 // Get mocks base method.
 func (m *MockAccount) Get(ctx context.Context, filter *models.Account) (*models.Account, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Login", ctx, filter)
+	ret := m.ctrl.Call(m, "Get", ctx, filter)
 	ret0, _ := ret[0].(*models.Account)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -76,7 +76,7 @@ func (m *MockAccount) Get(ctx context.Context, filter *models.Account) (*models.
 // Get indicates an expected call of Get.
 func (mr *MockAccountMockRecorder) Get(ctx, filter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockAccount)(nil).Get), ctx, filter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAccount)(nil).Get), ctx, filter)
 }
 
 // GetAll mocks base method.
@@ -164,7 +164,7 @@ func (mr *MockBlogMockRecorder) Delete(ctx, blogID interface{}) *gomock.Call {
 // Get mocks base method.
 func (m *MockBlog) Get(ctx context.Context, filter models.Blog) (*models.Blog, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Login", ctx, filter)
+	ret := m.ctrl.Call(m, "Get", ctx, filter)
 	ret0, _ := ret[0].(*models.Blog)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -173,7 +173,7 @@ func (m *MockBlog) Get(ctx context.Context, filter models.Blog) (*models.Blog, e
 // Get indicates an expected call of Get.
 func (mr *MockBlogMockRecorder) Get(ctx, filter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockBlog)(nil).Get), ctx, filter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockBlog)(nil).Get), ctx, filter)
 }
 
 // GetAll mocks base method.
