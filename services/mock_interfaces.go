@@ -36,7 +36,7 @@ func (m *MockAccount) EXPECT() *MockAccountMockRecorder {
 }
 
 // CheckAvailability mocks base method.
-func (m *MockAccount) CheckAvailability(ctx context.Context, user models.User) error {
+func (m *MockAccount) CheckAvailability(ctx context.Context, user *models.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CheckAvailability", ctx, user)
 	ret0, _ := ret[0].(error)

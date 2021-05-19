@@ -2,59 +2,119 @@ package response
 
 import (
 	"encoding/json"
+	"net/http"
+	"time"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/models"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
-	"net/http"
 )
 
-func WriteResponse(w http.ResponseWriter, err error, resp interface{}, log log.Logger) {
-	var errType string
+type Response struct {
+	Err  error
+	Data interface{}
+}
 
-	switch err.(type) {
-	case nil:
-	case errors.DBError:
-		errType = "db-error"
-	case errors.MissingParam:
-		errType = "missing-param"
-	case errors.InvalidParam:
-		errType = "invalid-param"
-	case errors.EntityNotFound:
-		errType = "entity-not-found"
-	case errors.AuthError:
-		errType = "auth-error"
-	case errors.Error:
-		errType = err.(errors.Error).Type
-	case errors.EntityAlreadyExists:
-		errType = "entity-already-exists"
-	}
+func New(err error, data interface{}) Response {
+	return Response{Err: err, Data: data}
+}
+
+func (r Response) Write(w http.ResponseWriter) {
+	errType := checkErrorType(r.Err)
 
 	var result interface{}
 
-	if err == nil {
+	if r.Err == nil {
+		if account, ok := r.Data.(*models.Account); ok {
+			a := struct {
+				UserName   string        `json:"user_name"`
+				FName      string        `json:"f_name"`
+				LName      string        `json:"l_name"`
+				Email      *string       `json:"email,omitempty"`
+				PhoneNo    *string       `json:"phone_no,omitempty"`
+				PwdUpdate  *time.Time    `json:"pwd_update,omitempty"`
+				Blogs      []models.Blog `json:"blogs,omitempty"`
+				CreatedAt  time.Time     `json:"created_at"`
+				DelRequest *time.Time    `json:"del_req,omitempty"`
+				Status     string        `json:"status"`
+			}{
+				UserName:   account.UserName,
+				FName:      account.FName,
+				LName:      account.LName,
+				Blogs:      account.Blogs,
+				CreatedAt:  account.CreatedAt,
+				DelRequest: nil,
+				Status:     account.Status,
+			}
+
+			if account.Email.String != "" {
+				a.Email = &account.Email.String
+			}
+
+			if account.PhoneNo.String != "" {
+				a.PhoneNo = &account.PhoneNo.String
+			}
+
+			if account.PwdUpdate != nil {
+				a.PwdUpdate = &account.PwdUpdate.Time
+			}
+
+			if account.DelRequest != nil {
+				a.DelRequest = &account.DelRequest.Time
+			}
+
+			r.Data = a
+		}
+
+		if user, ok := r.Data.(*models.User); ok {
+			u := struct {
+				UserName string  `json:"user_name"`
+				FName    string  `json:"f_name"`
+				LName    string  `json:"l_name"`
+				Email    *string `json:"email,omitempty"`
+				PhoneNo  *string `json:"phone_no,omitempty"`
+			}{
+				UserName: user.UserName,
+				FName:    user.FName,
+				LName:    user.LName,
+			}
+
+			if user.Email.String != "" {
+				u.Email = &user.Email.String
+			}
+
+			if user.PhoneNo.String != "" {
+				u.PhoneNo = &user.PhoneNo.String
+			}
+
+			r.Data = u
+		}
+
 		result = struct {
 			Status string      `json:"status"`
 			Data   interface{} `json:"data,omitempty"`
 		}{
 			Status: "success",
-			Data:   resp,
+			Data:   r.Data,
 		}
 	} else {
-		type Err struct {
+		type err struct {
 			Msg  string `json:"msg,omitempty"`
 			Type string `json:"type,omitempty"`
 		}
 		result = struct {
 			Status string `json:"status"`
-			Err    Err    `json:"error"`
+			Err    err    `json:"error"`
 		}{
 			Status: "failure",
-			Err: Err{
-				Msg:  err.Error(),
+			Err: err{
+				Msg:  r.Err.Error(),
 				Type: errType,
 			},
 		}
 
-		log.Error(err)
+		log.NewLogger().Error(r.Err) //todo
 	}
 
 	response, _ := json.Marshal(result)
@@ -62,8 +122,30 @@ func WriteResponse(w http.ResponseWriter, err error, resp interface{}, log log.L
 	w.Write(response)
 }
 
-func SetHeader(w http.ResponseWriter, err error, resp interface{}, log log.Logger) {
+func checkErrorType(err error) string {
 	switch err.(type) {
+	case nil:
+	case errors.DBError:
+		return "db-error"
+	case errors.MissingParam:
+		return "missing-param"
+	case errors.InvalidParam:
+		return "invalid-param"
+	case errors.EntityNotFound:
+		return "entity-not-found"
+	case errors.AuthError:
+		return "auth-error"
+	case errors.Error:
+		return err.(errors.Error).Type
+	case errors.EntityAlreadyExists:
+		return "entity-already-exists"
+	}
+
+	return "unknown-type"
+}
+
+func (r Response) WriteHeader(w http.ResponseWriter) {
+	switch r.Err.(type) {
 	case errors.DBError, errors.Error:
 		w.WriteHeader(http.StatusInternalServerError)
 	case errors.MissingParam, errors.InvalidParam, errors.EntityAlreadyExists:
@@ -76,5 +158,5 @@ func SetHeader(w http.ResponseWriter, err error, resp interface{}, log log.Logge
 		w.WriteHeader(http.StatusOK)
 	}
 
-	WriteResponse(w, err, resp, log)
+	r.Write(w)
 }

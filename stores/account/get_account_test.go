@@ -4,14 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func initializeTest(t *testing.T) (*sql.DB, sqlmock.Sqlmock, stores.Account) {
@@ -148,8 +149,8 @@ func getOutput() *models.Account {
 	return &models.Account{
 		User:       models.User{ID: 1, UserName: "aakanksha_jais", FName: "Aakanksha", LName: "Jaiswal", Email: sql.NullString{String: "jaiswal14aakanksha@gmail.com", Valid: true}, PhoneNo: sql.NullString{String: "7807052049", Valid: true}, Password: "$2a$10$.HUjOWXbMuVBXkpRLX9fuOg623yZP0/UTF4EAGHCJu1fXNWP4M7eS"},
 		CreatedAt:  lt,
-		PwdUpdate:  sql.NullTime{Time: lt, Valid: true},
-		DelRequest: sql.NullTime{Valid: false},
+		PwdUpdate:  &sql.NullTime{Time: lt, Valid: true},
+		DelRequest: &sql.NullTime{Valid: false},
 		Status:     "ACTIVE",
 	}
 }

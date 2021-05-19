@@ -10,11 +10,11 @@ import (
 
 type Account struct {
 	User                     // Details of the User
-	PwdUpdate  *sql.NullTime `json:"pwd_update,omitempty"` // Time Stamp of most recent Password Update
-	Blogs      []Blog        `json:"blogs,omitempty"`      // List of Blogs posted by Account
-	CreatedAt  time.Time     `json:"created_at"`           // Time of Creation of Account
-	DelRequest *sql.NullTime `json:"del_req,omitempty"`    // Time Stamp of Account Delete Request
-	Status     string        `json:"status"`               // Account Active or Inactive
+	PwdUpdate  *sql.NullTime // Time Stamp of most recent Password Update
+	Blogs      []Blog        // List of Blogs posted by Account
+	CreatedAt  time.Time     // Time of Creation of Account
+	DelRequest *sql.NullTime // Time Stamp of Account Delete Request
+	Status     string        // Account Active or Inactive
 }
 
 const (
@@ -79,8 +79,8 @@ func (a *Account) WhereClause() (whereClause string, queryParams []interface{}) 
 
 func (a Account) String() string {
 	if a.ID != 0 {
-		return fmt.Sprintf("Account: %v %v, (Username: %v and ID: %v)", a.FName, a.LName, a.UserName, a.ID)
+		return fmt.Sprintf("ACCOUNT %v %v, (USERNAME %v and ID %v)", a.FName, a.LName, a.UserName, a.ID)
 	}
 
-	return fmt.Sprintf("Account: %v %v, (Username: %v)", a.FName, a.LName, a.UserName)
+	return fmt.Sprintf("ACCOUNT %v %v, (USERNAME %v)", a.FName, a.LName, a.UserName)
 }

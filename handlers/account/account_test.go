@@ -3,6 +3,13 @@ package account
 import (
 	"bytes"
 	"database/sql"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/handlers"
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
@@ -10,12 +17,6 @@ import (
 	"github.com/Aakanksha-jais/picshot-golang-backend/services"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"testing"
-	"time"
 )
 
 func initializeTest(t *testing.T) (handlers.Account, *services.MockAccount) {
@@ -43,7 +44,7 @@ func TestHandler_Account_Signup(t *testing.T) {
 
 	createdAt := time.Now()
 	mockService.EXPECT().Create(gomock.Any(), &user).
-		Return(&models.Account{User: user, PwdUpdate: sql.NullTime{Valid: false}, CreatedAt: createdAt, DelRequest: sql.NullTime{Valid: false}, Status: "ACTIVE"}, nil)
+		Return(&models.Account{User: user, PwdUpdate: &sql.NullTime{Valid: false}, CreatedAt: createdAt, DelRequest: &sql.NullTime{Valid: false}, Status: "ACTIVE"}, nil)
 
 	tests := []struct {
 		description string

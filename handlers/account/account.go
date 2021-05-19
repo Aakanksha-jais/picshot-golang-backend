@@ -2,18 +2,15 @@ package account
 
 import (
 	"database/sql"
-	"encoding/json"
-	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/mux"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/handlers"
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/response"
 	"github.com/Aakanksha-jais/picshot-golang-backend/services"
@@ -50,7 +47,7 @@ func (a account) Login(w http.ResponseWriter, r *http.Request) {
 
 	account, err := a.service.Login(r.Context(), user)
 	if err != nil {
-		response.SetHeader(w, err, nil, a.logger)
+		response.New(err, nil).WriteHeader(w)
 
 		return
 	}
@@ -63,7 +60,7 @@ func (a account) Login(w http.ResponseWriter, r *http.Request) {
 		setAuthHeader(w, token)
 	}
 
-	response.SetHeader(w, err, nil, a.logger) // Set Header to StatusOK if err is nil
+	response.New(err, nil).WriteHeader(w) // Set Header to StatusOK if err is nil
 }
 
 func (a account) CheckAvailability(w http.ResponseWriter, r *http.Request) {
@@ -71,8 +68,8 @@ func (a account) CheckAvailability(w http.ResponseWriter, r *http.Request) {
 	email := r.URL.Query().Get("email")
 	phone := r.URL.Query().Get("phone")
 
-	err := a.service.CheckAvailability(r.Context(), models.User{UserName: username, PhoneNo: sql.NullString{String: phone, Valid: true}, Email: sql.NullString{String: email, Valid: true}})
-	response.SetHeader(w, err, nil, a.logger)
+	err := a.service.CheckAvailability(r.Context(), &models.User{UserName: username, PhoneNo: sql.NullString{String: phone, Valid: true}, Email: sql.NullString{String: email, Valid: true}})
+	response.New(err, nil).WriteHeader(w)
 }
 
 func (a account) Signup(w http.ResponseWriter, r *http.Request) {
@@ -95,7 +92,7 @@ func (a account) Signup(w http.ResponseWriter, r *http.Request) {
 	// Create an Account based on User Details Provided
 	account, err := a.service.Create(r.Context(), user)
 	if err != nil {
-		response.SetHeader(w, err, nil, a.logger)
+		response.New(err, nil).WriteHeader(w)
 
 		return
 	}
@@ -104,7 +101,7 @@ func (a account) Signup(w http.ResponseWriter, r *http.Request) {
 	token, err := generateToken(expirationTime, account.ID, a.config)
 	if err != nil {
 		a.logger.Errorf("error in generating token: %v", err)
-		response.SetHeader(w, err, nil, a.logger)
+		response.New(err, nil).WriteHeader(w)
 
 		return
 	}
@@ -112,9 +109,9 @@ func (a account) Signup(w http.ResponseWriter, r *http.Request) {
 	a.logger.Infof("token generated successfully: %v, expiration: %v", token[:10], expirationTime.Format(time.RFC850))
 
 	setAuthHeader(w, token)
-
 	w.WriteHeader(http.StatusCreated)
-	response.WriteResponse(w, nil, nil, a.logger)
+
+	response.New(nil, nil).Write(w)
 }
 
 func (a account) Get(w http.ResponseWriter, r *http.Request) {
@@ -123,45 +120,18 @@ func (a account) Get(w http.ResponseWriter, r *http.Request) {
 
 	account, err := a.service.GetByID(r.Context(), id.(int64))
 
-	response.SetHeader(w, err, account, a.logger)
+	response.New(err, account).WriteHeader(w)
 }
 
-func setAuthHeader(w http.ResponseWriter, token string) {
-	w.Header().Add("Authorization", fmt.Sprintf("Bearer %s", token))
-}
+func (a account) GetUser(w http.ResponseWriter, r *http.Request) {
+	username := mux.Vars(r)["username"]
 
-func generateToken(exp time.Time, userID int64, config configs.ConfigLoader) (string, error) {
-	token, err := auth.CreateToken(config, auth.NewClaim(exp.Unix(), userID))
+	account, err := a.service.GetAccountWithBlogs(r.Context(), username)
 	if err != nil {
-		return "", err
+		w.WriteHeader(http.StatusNotFound)
 	}
 
-	return token, nil
-}
-
-func readUser(w http.ResponseWriter, reqBody io.ReadCloser, logger log.Logger) ([]byte, error) {
-	body, err := ioutil.ReadAll(reqBody)
-	if err != nil {
-		response.SetHeader(w, errors.Error{Err: err, Type: "body-read-error", Message: "error in reading request body"}, nil, logger)
-
-		return nil, err
-	}
-
-	return body, nil
-}
-
-func unmarshalUser(w http.ResponseWriter, body []byte, logger log.Logger) (*models.User, error) {
-	var user models.User
-
-	err := json.Unmarshal(body, &user)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response.WriteResponse(w, errors.Error{Err: err, Type: "unmarshal-error", Message: "invalid request body"}, nil, logger)
-
-		return nil, err
-	}
-
-	return &user, nil
+	response.New(err, account).Write(w)
 }
 
 func (a account) Logout(w http.ResponseWriter, r *http.Request) {

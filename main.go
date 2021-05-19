@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/driver"
 	handlerAccount "github.com/Aakanksha-jais/picshot-golang-backend/handlers/account"
 	handlerBlog "github.com/Aakanksha-jais/picshot-golang-backend/handlers/blog"
@@ -14,7 +16,6 @@ import (
 	storeBlog "github.com/Aakanksha-jais/picshot-golang-backend/stores/blog"
 	storeTag "github.com/Aakanksha-jais/picshot-golang-backend/stores/tag"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 func main() {
@@ -52,6 +53,7 @@ func main() {
 	r.HandleFunc("/signup", accountHandler.Signup).Methods(http.MethodPost)
 	r.HandleFunc("/myaccount", accountHandler.Get).Methods(http.MethodGet)
 	r.HandleFunc("/myaccount", accountHandler.Update).Methods(http.MethodPut)
+	r.HandleFunc("/user/{username}", accountHandler.GetUser).Methods(http.MethodGet)
 	r.HandleFunc("/available", accountHandler.CheckAvailability).Queries("username", "{username}").Methods(http.MethodGet)
 	r.HandleFunc("/available", accountHandler.CheckAvailability).Queries("email", "{email}").Methods(http.MethodGet)
 	r.HandleFunc("/available", accountHandler.CheckAvailability).Queries("phone", "{phone}").Methods(http.MethodGet)

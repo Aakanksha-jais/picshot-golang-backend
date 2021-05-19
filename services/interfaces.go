@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 )
 
@@ -29,7 +30,7 @@ type Account interface {
 	Login(ctx context.Context, user *models.User) (*models.Account, error)
 
 	// CheckAvailability checks if username, phone number and email exist in the database already.
-	CheckAvailability(ctx context.Context, user models.User) error
+	CheckAvailability(ctx context.Context, user *models.User) error
 }
 
 type Blog interface {

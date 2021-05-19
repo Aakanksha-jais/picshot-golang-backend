@@ -3,13 +3,14 @@ package account
 import (
 	"context"
 	"database/sql"
+	"reflect"
+	"strings"
+	"time"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
-	"reflect"
-	"strings"
-	"time"
 )
 
 type account struct {
