@@ -1,11 +1,13 @@
 package account
 
 import (
-	"context"
 	"database/sql"
+	"fmt"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
@@ -18,8 +20,8 @@ type account struct {
 	logger log.Logger
 }
 
-func New(db *sql.DB, logger log.Logger) stores.Account {
-	return account{db: db, logger: logger}
+func New(db *sql.DB) stores.Account {
+	return account{db: db}
 }
 
 const (
@@ -29,13 +31,13 @@ const (
 )
 
 // GetAll retrieves all accounts that match the given filter.
-func (a account) GetAll(ctx context.Context, filter *models.Account) ([]*models.Account, error) {
+func (a account) GetAll(c *app.Context, filter *models.Account) ([]*models.Account, error) {
 	where, qp := filter.WhereClause()
 	query := getAll + where
 
 	accounts := make([]*models.Account, 0)
 
-	rows, err := a.db.QueryContext(ctx, query, qp...)
+	rows, err := a.db.QueryContext(c, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -58,11 +60,11 @@ func (a account) GetAll(ctx context.Context, filter *models.Account) ([]*models.
 }
 
 // Get retrieves a single account that matches a given filter.
-func (a account) Get(ctx context.Context, filter *models.Account) (*models.Account, error) {
+func (a account) Get(c *app.Context, filter *models.Account) (*models.Account, error) {
 	where, qp := filter.WhereClause()
 	query := get + where
 
-	rows, err := a.db.QueryContext(ctx, query, qp...)
+	rows, err := a.db.QueryContext(c, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -86,8 +88,8 @@ func (a account) Get(ctx context.Context, filter *models.Account) (*models.Accou
 }
 
 // Create creates an account.
-func (a account) Create(ctx context.Context, model *models.Account) (*models.Account, error) {
-	res, err := a.db.ExecContext(ctx, insert, model.UserName, model.Password, model.Email, model.FName, model.LName, model.PhoneNo, model.Status)
+func (a account) Create(c *app.Context, model *models.Account) (*models.Account, error) {
+	res, err := a.db.ExecContext(c, insert, model.UserName, model.Password, model.Email, model.FName, model.LName, model.PhoneNo, model.Status)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -97,7 +99,7 @@ func (a account) Create(ctx context.Context, model *models.Account) (*models.Acc
 		return nil, errors.DBError{Err: err}
 	}
 
-	account, err := a.Get(ctx, &models.Account{User: models.User{ID: id}})
+	account, err := a.Get(c, &models.Account{User: models.User{ID: id}})
 	if err != nil {
 		return nil, err
 	}
@@ -106,11 +108,14 @@ func (a account) Create(ctx context.Context, model *models.Account) (*models.Acc
 }
 
 // Update updates an account.
-func (a account) Update(ctx context.Context, model *models.Account) (*models.Account, error) {
-
+func (a account) Update(c *app.Context, model *models.Account) (*models.Account, error) {
 	query, qp := generateSetClause(model)
+	query = fmt.Sprintf("%s WHERE id = ?;", query)
+	qp = append(qp, int(model.ID))
 
-	res, err := a.db.ExecContext(ctx, query, qp...)
+	c.Logger.Debugf("query executed: %s with params %v", query, qp)
+
+	res, err := a.db.ExecContext(c, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -120,59 +125,59 @@ func (a account) Update(ctx context.Context, model *models.Account) (*models.Acc
 		return nil, errors.DBError{Err: err}
 	}
 
-	return a.Get(ctx, &models.Account{User: models.User{ID: id}})
+	return a.Get(c, &models.Account{User: models.User{ID: id}})
 }
 
 func generateSetClause(model *models.Account) (setClause string, qp []interface{}) {
-	setClause = `UPDATE accounts SET`
+	setClause = "UPDATE accounts SET"
 
 	if model.UserName != "" {
-		setClause += ` user_name = ?,`
+		setClause += " user_name = ?,"
 
 		qp = append(qp, model.UserName)
 	}
 
-	if !reflect.DeepEqual(model.Password, []byte{}) {
-		setClause += ` password = ?, pwd_update = ?,`
+	if model.Password != "" {
+		setClause += " password = ?, pwd_update = ?,"
 
-		qp = append(qp, model.Password, time.Now())
+		qp = append(qp, model.Password, model.PwdUpdate)
 	}
 
 	if model.Email.String != "" {
-		setClause += ` email = ?,`
+		setClause += " email = ?,"
 
-		qp = append(qp, model.Email.String)
+		qp = append(qp, model.Email)
 	}
 
 	if model.FName != "" {
-		setClause += ` f_name = ?,`
+		setClause += " f_name = ?,"
 
 		qp = append(qp, model.FName)
 	}
 
 	if model.LName != "" {
-		setClause += ` l_name = ?,`
+		setClause += " l_name = ?,"
 
 		qp = append(qp, model.LName)
 	}
 
 	if model.PhoneNo.String != "" {
-		setClause += ` phone_no = ?,`
+		setClause += " phone_no = ?,"
 
-		qp = append(qp, model.PhoneNo.String)
+		qp = append(qp, model.PhoneNo)
 	}
 
 	if model.Status != "ACTIVE" {
-		setClause += ` status = ?,`
+		setClause += " status = ?,"
 
 		qp = append(qp, "ACTIVE")
 	}
 
 	// todo update del req
-	if !model.DelRequest.Valid {
-		setClause += ` del_req = ?,`
+	if model.DelRequest != nil && !model.DelRequest.Valid {
+		setClause += " del_req = ?,"
 
-		qp = append(qp, "NULL") //set to null
+		qp = append(qp, sql.NullTime{})
 	}
 
 	setClause = strings.TrimSuffix(setClause, ",")
@@ -182,8 +187,8 @@ func generateSetClause(model *models.Account) (setClause string, qp []interface{
 
 // Delete updates a delete request for an account and sets its status to inactive.
 // Account is then permanently deleted after 30 days of inactivity.
-func (a account) Delete(ctx context.Context, id int64) error {
-	_, err := a.db.ExecContext(ctx, "UPDATE accounts SET del_req = ?, status = ? WHERE id = ?", time.Now(), "INACTIVE", id)
+func (a account) Delete(c *app.Context, id int64) error {
+	_, err := a.db.ExecContext(c, "UPDATE accounts SET del_req = ?, status = ? WHERE id = ?", time.Now(), "INACTIVE", id)
 	if err != nil {
 		return errors.DBError{Err: err}
 	}

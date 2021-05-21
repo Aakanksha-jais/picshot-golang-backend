@@ -2,140 +2,126 @@ package account
 
 import (
 	"database/sql"
-	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/constants"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/models"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/handlers"
-	"github.com/Aakanksha-jais/picshot-golang-backend/models"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/response"
 	"github.com/Aakanksha-jais/picshot-golang-backend/services"
 )
 
 type account struct {
 	service services.Account
-	logger  log.Logger
-	config  configs.ConfigLoader
 }
 
-func New(service services.Account, logger log.Logger, config configs.ConfigLoader) handlers.Account {
-	return account{
-		service: service,
-		logger:  logger,
-		config:  config,
-	}
-}
+func (a account) Login(c *app.Context) (interface{}, error) {
+	exp := time.Now().Add(30 * time.Minute)
 
-func (a account) Login(w http.ResponseWriter, r *http.Request) {
-	expirationTime := time.Now().Add(30 * time.Minute)
-
-	body, err := readUser(w, r.Body, a.logger)
+	user, err := c.Request.UnmarshalUser()
 	if err != nil {
-		a.logger.Errorf("error in reading request body: %v", err)
-		return
+		return nil, err
 	}
 
-	user, err := unmarshalUser(w, body, a.logger)
+	account, err := a.service.Login(c, user)
 	if err != nil {
-		a.logger.Errorf("error in unmarshalling request body %v", err)
-		return
+		return nil, err
 	}
 
-	account, err := a.service.Login(r.Context(), user)
+	token, err := auth.CreateToken(auth.NewClaim(exp.Unix(), account.ID))
 	if err != nil {
-		response.New(err, nil).WriteHeader(w)
-
-		return
-	}
-
-	token, err := generateToken(expirationTime, account.ID, a.config)
-	if err != nil {
-		a.logger.Errorf("error in generating token: %v", err)
+		c.Logger.Warnf("error in generating token: %v", err)
 	} else {
-		a.logger.Infof("token generated successfully: %v, expires at: %v", token[:10], expirationTime.Format(time.RFC850))
-		setAuthHeader(w, token)
+		c.Logger.Debugf("token generated successfully \033[32m[expires at: %v]\033[0m", exp.Format(time.RFC850))
+
+		c.SetAuthHeader(token)
 	}
 
-	response.New(err, nil).WriteHeader(w) // Set Header to StatusOK if err is nil
+	return nil, err
 }
 
-func (a account) CheckAvailability(w http.ResponseWriter, r *http.Request) {
-	username := r.URL.Query().Get("username")
-	email := r.URL.Query().Get("email")
-	phone := r.URL.Query().Get("phone")
+func (a account) Signup(c *app.Context) (interface{}, error) {
+	exp := time.Now().Add(30 * time.Minute)
 
-	err := a.service.CheckAvailability(r.Context(), &models.User{UserName: username, PhoneNo: sql.NullString{String: phone, Valid: true}, Email: sql.NullString{String: email, Valid: true}})
-	response.New(err, nil).WriteHeader(w)
-}
-
-func (a account) Signup(w http.ResponseWriter, r *http.Request) {
-	expirationTime := time.Now().Add(30 * time.Minute)
-
-	body, err := readUser(w, r.Body, a.logger)
+	user, err := c.Request.UnmarshalUser()
 	if err != nil {
-		a.logger.Errorf("error in reading request body: %v", err)
-		return
+		return nil, err
 	}
 
-	user, err := unmarshalUser(w, body, a.logger)
+	c.Logger.Debugf("signup request for %v", user)
+
+	account, err := a.service.Create(c, user)
 	if err != nil {
-		a.logger.Errorf("error in unmarshalling request body %v", err)
-		return
+		return nil, err
 	}
 
-	a.logger.Debugf("signup request for %v", user)
-
-	// Create an Account based on User Details Provided
-	account, err := a.service.Create(r.Context(), user)
+	token, err := auth.CreateToken(auth.NewClaim(exp.Unix(), account.ID))
 	if err != nil {
-		response.New(err, nil).WriteHeader(w)
+		c.Logger.Warnf("error in generating token: %v", err)
+	} else {
+		c.Logger.Debugf("token generated successfully \033[32m[expires at: %v]\u001B[0m", exp.Format(time.RFC850))
 
-		return
+		c.SetAuthHeader(token)
 	}
 
-	// Create a JWT Token
-	token, err := generateToken(expirationTime, account.ID, a.config)
-	if err != nil {
-		a.logger.Errorf("error in generating token: %v", err)
-		response.New(err, nil).WriteHeader(w)
-
-		return
-	}
-
-	a.logger.Infof("token generated successfully: %v, expiration: %v", token[:10], expirationTime.Format(time.RFC850))
-
-	setAuthHeader(w, token)
-	w.WriteHeader(http.StatusCreated)
-
-	response.New(nil, nil).Write(w)
+	return constants.CreateSuccess, err
 }
 
-func (a account) Get(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value(auth.JWTContextKey("user_id"))
-	a.logger.Debugf("user with id: %v is logged in", id)
-
-	account, err := a.service.GetByID(r.Context(), id.(int64))
-
-	response.New(err, account).WriteHeader(w)
+func (a account) Logout(c *app.Context) (interface{}, error) {
+	return nil, nil
 }
 
-func (a account) GetUser(w http.ResponseWriter, r *http.Request) {
-	username := mux.Vars(r)["username"]
+func (a account) Get(c *app.Context) (interface{}, error) {
+	id := c.Value(auth.JWTContextKey("user_id"))
 
-	account, err := a.service.GetAccountWithBlogs(r.Context(), username)
+	c.Logger.Debugf("user with id: %v is logged in", id)
+
+	return a.service.GetByID(c, id.(int64))
+}
+
+func (a account) GetUser(c *app.Context) (interface{}, error) {
+	username := c.Request.PathParam("username")
+
+	return a.service.GetAccountWithBlogs(c, username)
+}
+
+// Update updates user details but not password.
+func (a account) Update(c *app.Context) (interface{}, error) {
+	user, err := c.Request.UnmarshalUser()
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		return nil, err
 	}
 
-	response.New(err, account).Write(w)
+	return a.service.UpdateUser(c, user)
 }
 
-func (a account) Logout(w http.ResponseWriter, r *http.Request) {
+func (a account) UpdatePassword(c *app.Context) (interface{}, error) {
+	pwd := struct {
+		Old string `json:"old_password"`
+		New string `json:"new_password"`
+	}{}
+
+	err := c.Request.Unmarshal(&pwd)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, a.service.UpdatePassword(c, pwd.Old, pwd.New)
 }
 
-func (a account) Update(w http.ResponseWriter, r *http.Request) {
+func (a account) CheckAvailability(c *app.Context) (interface{}, error) {
+	username := c.Request.QueryParam("username")
+	email := c.Request.QueryParam("email")
+	phone := c.Request.QueryParam("phone")
+
+	return nil, a.service.CheckAvailability(c, &models.User{UserName: username, PhoneNo: sql.NullString{String: phone, Valid: true}, Email: sql.NullString{String: email, Valid: true}})
+}
+
+func New(service services.Account) handlers.Account {
+	return account{service: service}
 }

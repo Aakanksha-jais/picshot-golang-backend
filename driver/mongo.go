@@ -3,9 +3,10 @@ package driver
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
-	"time"
 
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -52,7 +53,7 @@ func (c MongoConfigs) ConnectToMongo(logger log.Logger) (*mongo.Database, error)
 	return client.Database(c.Database), nil
 }
 
-func NewMongoConfigs(config configs.ConfigLoader) MongoConfigs {
+func NewMongoConfigs(config configs.Config) MongoConfigs {
 	return MongoConfigs{
 		Username: config.Get("MONGO_DB_USER"),
 		Password: config.Get("MONGO_DB_PASS"),

@@ -1,10 +1,11 @@
 package auth
 
 import (
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
+	"os"
+	"time"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 	"github.com/dgrijalva/jwt-go"
-	"time"
 )
 
 type JWTContextKey string
@@ -35,10 +36,10 @@ func (c *Claims) Valid() error {
 	return nil
 }
 
-func CreateToken(config configs.ConfigLoader, c *Claims) (string, error) {
+func CreateToken(c *Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, c)
 
-	signedToken, err := token.SignedString([]byte(config.Get("ACCESS_KEY")))
+	signedToken, err := token.SignedString([]byte(os.Getenv("ACCESS_KEY")))
 	if err != nil {
 		return "", errors.Error{Message: "error in signing token", Err: err, Type: "token-creation"}
 	}
@@ -46,13 +47,13 @@ func CreateToken(config configs.ConfigLoader, c *Claims) (string, error) {
 	return signedToken, nil
 }
 
-func ParseToken(config configs.ConfigLoader, signedToken string) (*Claims, error) {
+func ParseToken(signedToken string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(signedToken, &Claims{}, func(t *jwt.Token) (interface{}, error) {
 		if t.Method.Alg() != jwt.SigningMethodHS512.Alg() {
 			return nil, errors.AuthError{Message: "invalid signing algorithm"}
 		}
 
-		return []byte(config.Get("ACCESS_KEY")), nil
+		return []byte(os.Getenv("ACCESS_KEY")), nil
 	})
 
 	if err == nil && token != nil {

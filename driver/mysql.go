@@ -3,6 +3,7 @@ package driver
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 
@@ -36,12 +37,12 @@ func (c SQLConfigs) ConnectToSQL(logger log.Logger) (*sql.DB, error) {
 	return db, nil
 }
 
-func NewSQLConfigs(config configs.ConfigLoader) SQLConfigs {
+func NewSQLConfigs(config configs.Config) SQLConfigs {
 	return SQLConfigs{
-		HostName: config.Get("DB_HOST"),
-		Username: config.Get("DB_USER"),
+		HostName: config.GetOrDefault("DB_HOST", "localhost"),
+		Username: config.GetOrDefault("DB_USER", "root"),
 		Password: config.Get("DB_PASSWORD"),
-		Port:     config.Get("DB_PORT"),
+		Port:     config.GetOrDefault("DB_PORT", "3306"),
 		Database: config.Get("DB_NAME"),
 	}
 }

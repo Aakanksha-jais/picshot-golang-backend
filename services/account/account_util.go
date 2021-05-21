@@ -1,69 +1,70 @@
 package account
 
 import (
-	"context"
 	"database/sql"
 	"regexp"
 	"strings"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 )
 
-func (a account) checkUsernameAvailability(ctx context.Context, username string) error {
+func (a account) checkUsernameAvailability(c *app.Context, username string) error {
 	if err := validateUsername(username); err != nil {
 		return err
 	}
 
-	acc, _ := a.accountStore.Get(ctx, &models.Account{User: models.User{UserName: username}})
+	acc, _ := a.accountStore.Get(c, &models.Account{User: models.User{UserName: username}})
 	if acc != nil {
 		return errors.EntityAlreadyExists{Entity: "user", ValueType: "username", Value: username}
 	}
 
-	a.logger.Debugf("username %s available", username)
+	c.Logger.Debugf("username %s available", username)
 	return nil
 }
 
-func (a account) checkEmailAvailability(ctx context.Context, email string) error {
+func (a account) checkEmailAvailability(c *app.Context, email string) error {
 	if err := validateEmail(email); err != nil {
 		return err
 	}
 
-	acc, _ := a.accountStore.Get(ctx, &models.Account{User: models.User{Email: sql.NullString{String: email, Valid: true}}})
+	acc, _ := a.accountStore.Get(c, &models.Account{User: models.User{Email: sql.NullString{String: email, Valid: true}}})
 	if acc != nil {
 		return errors.EntityAlreadyExists{Entity: "user", ValueType: "email", Value: email}
 	}
 
-	a.logger.Debugf("email %s available", email)
+	c.Logger.Debugf("email %s available", email)
 	return nil
 }
 
-func (a account) checkPhoneAvailability(ctx context.Context, phone string) error {
+func (a account) checkPhoneAvailability(c *app.Context, phone string) error {
 	if err := validatePhone(phone); err != nil {
 		return err
 	}
 
-	acc, _ := a.accountStore.Get(ctx, &models.Account{User: models.User{PhoneNo: sql.NullString{String: phone, Valid: true}}})
+	acc, _ := a.accountStore.Get(c, &models.Account{User: models.User{PhoneNo: sql.NullString{String: phone, Valid: true}}})
 	if acc != nil {
 		return errors.EntityAlreadyExists{Entity: "user", ValueType: "phone_no", Value: phone}
 	}
 
-	a.logger.Debugf("phone number %s available", phone)
+	c.Logger.Debugf("phone number %s available", phone)
 	return nil
 }
 
-func (a account) checkUserExists(ctx context.Context, user *models.User) error {
-	acc, _ := a.accountStore.Get(ctx, &models.Account{User: models.User{UserName: user.UserName}})
+func (a account) checkUserExists(c *app.Context, user *models.User) error {
+	acc, _ := a.accountStore.Get(c, &models.Account{User: models.User{UserName: user.UserName}})
 	if acc != nil {
 		return errors.EntityAlreadyExists{Entity: "user", ValueType: "username", Value: user.UserName}
 	}
 
-	acc, _ = a.accountStore.Get(ctx, &models.Account{User: models.User{Email: user.Email}})
+	acc, _ = a.accountStore.Get(c, &models.Account{User: models.User{Email: user.Email}})
 	if acc != nil {
 		return errors.EntityAlreadyExists{Entity: "user", ValueType: "email", Value: user.Email.String}
 	}
 
-	acc, _ = a.accountStore.Get(ctx, &models.Account{User: models.User{PhoneNo: user.PhoneNo}})
+	acc, _ = a.accountStore.Get(c, &models.Account{User: models.User{PhoneNo: user.PhoneNo}})
 	if acc != nil {
 		return errors.EntityAlreadyExists{Entity: "user", ValueType: "phone number", Value: user.PhoneNo.String}
 	}
