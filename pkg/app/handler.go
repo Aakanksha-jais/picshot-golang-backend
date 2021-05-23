@@ -38,6 +38,8 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	case *models.User:
 		respData = getUserResponse(data)
+	default:
+		respData = data
 	}
 
 	switch err {

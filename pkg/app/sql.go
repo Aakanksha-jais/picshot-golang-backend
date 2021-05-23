@@ -4,8 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
+	_ "github.com/go-sql-driver/mysql"
 
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 )
 
