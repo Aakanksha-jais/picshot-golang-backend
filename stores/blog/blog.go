@@ -22,7 +22,7 @@ func New() blog {
 
 // GetAll is used to retrieve all blogs that match the filter.
 // BLogs can be filtered by account_id, blog_id and title.
-func (b blog) GetAll(c *app.Context, filter models.Blog) ([]*models.Blog, error) {
+func (b blog) GetAll(c *app.Context, filter *models.Blog) ([]*models.Blog, error) {
 	collection := c.Mongo.DB().Collection("blogs")
 
 	opts := options.Find().SetSort(bson.D{{Key: "_id", Value: -1}}) // retrieve the blogs in reverse chronological order

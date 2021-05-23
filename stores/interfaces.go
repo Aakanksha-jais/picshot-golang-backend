@@ -26,7 +26,7 @@ type Account interface {
 type Blog interface {
 	// GetAll is used to retrieve all blogs that match the filter.
 	// BLogs can be filtered by account_id, blog_id and title.
-	GetAll(c *app.Context, filter models.Blog) ([]*models.Blog, error)
+	GetAll(c *app.Context, filter *models.Blog) ([]*models.Blog, error)
 
 	// GetByIDs retrieves all blogs whose IDs have been provided as parameter.
 	GetByIDs(c *app.Context, idList []string) ([]*models.Blog, error)

@@ -177,7 +177,7 @@ func (mr *MockBlogMockRecorder) Get(c, filter interface{}) *gomock.Call {
 }
 
 // GetAll mocks base method.
-func (m *MockBlog) GetAll(c *app.Context, filter models.Blog) ([]*models.Blog, error) {
+func (m *MockBlog) GetAll(c *app.Context, filter *models.Blog) ([]*models.Blog, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAll", c, filter)
 	ret0, _ := ret[0].([]*models.Blog)

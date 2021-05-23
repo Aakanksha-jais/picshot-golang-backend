@@ -20,18 +20,18 @@ func initializeTest() (*app.Context, stores.Blog) {
 	return &app.Context{Context: context.TODO(), App: a}, New()
 }
 
-func TestBlog_GetAllBlogs(t *testing.T) {
+func TestBlog_GetAll(t *testing.T) {
 	ctx, blog := initializeTest()
 
 	tests := []struct {
 		description string
-		input       models.Blog
+		input       *models.Blog
 		output      []*models.Blog
 		err         error
 	}{
 		{
 			description: "get all with empty filter",
-			input:       models.Blog{},
+			input:       &models.Blog{},
 			output: []*models.Blog{
 				{BlogID: "id5", AccountID: 3, Title: "title5", Summary: "summary5", Content: "content5", Tags: []string{"tag1"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 16}.String(), Images: []string{"url1"}},
 				{BlogID: "id4", AccountID: 2, Title: "title4", Summary: "summary4", Content: "content4", Tags: []string{"tag3", "tag2"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 15}.String(), Images: []string{"url1"}},
@@ -43,7 +43,7 @@ func TestBlog_GetAllBlogs(t *testing.T) {
 		},
 		{
 			description: "get all with account id = 5",
-			input:       models.Blog{AccountID: 5},
+			input:       &models.Blog{AccountID: 5},
 			output: []*models.Blog{
 				{BlogID: "id3", AccountID: 5, Title: "title3", Summary: "summary3", Content: "content3", Tags: []string{}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 16}.String(), Images: []string{"url1"}},
 				{BlogID: "id2", AccountID: 5, Title: "title2", Summary: "summary2", Content: "content2", Tags: []string{"tag1", "tag2"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 20}.String(), Images: []string{"url1", "url2"}},
@@ -53,7 +53,7 @@ func TestBlog_GetAllBlogs(t *testing.T) {
 		},
 		{
 			description: "get all with title = title5",
-			input:       models.Blog{Title: "title5"},
+			input:       &models.Blog{Title: "title5"},
 			output: []*models.Blog{
 				{BlogID: "id5", AccountID: 3, Title: "title5", Summary: "summary5", Content: "content5", Tags: []string{"tag1"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 16}.String(), Images: []string{"url1"}},
 			},

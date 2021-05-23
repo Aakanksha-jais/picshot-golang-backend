@@ -10,8 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type tag struct {
-}
+type tag struct{}
 
 func New() stores.Tag {
 	return tag{}
