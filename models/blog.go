@@ -2,6 +2,7 @@ package models
 
 import "go.mongodb.org/mongo-driver/bson"
 
+// Blog is filterable by blog id, account id and title ONLY.
 type Blog struct {
 	BlogID    string   `bson:"_id" json:"-"`                 // Unique Blog ID
 	AccountID int64    `bson:"account_id" json:"account_id"` // ID of Account associated with the Blog

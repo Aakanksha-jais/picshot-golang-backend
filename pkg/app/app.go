@@ -1,9 +1,9 @@
 package app
 
 import (
+	"net/http"
 	"os"
-
-	"github.com/Aakanksha-jais/picshot-golang-backend/driver"
+	"time"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
@@ -35,22 +35,22 @@ func New() *App {
 
 // GET adds a Handler for http GET method for a route pattern.
 func (a *App) GET(pattern string, handler Handler) {
-	a.add("GET", pattern, handler)
+	a.add(http.MethodGet, pattern, handler)
 }
 
 // PUT adds a Handler for http PUT method for a route pattern.
 func (a *App) PUT(pattern string, handler Handler) {
-	a.add("PUT", pattern, handler)
+	a.add(http.MethodPut, pattern, handler)
 }
 
 // POST adds a Handler for http POST method for a route pattern.
 func (a *App) POST(pattern string, handler Handler) {
-	a.add("POST", pattern, handler)
+	a.add(http.MethodPost, pattern, handler)
 }
 
 // DELETE adds a Handler for http DELETE method for a route pattern.
 func (a *App) DELETE(pattern string, handler Handler) {
-	a.add("DELETE", pattern, handler)
+	a.add(http.MethodDelete, pattern, handler)
 }
 
 func (a *App) add(method, pattern string, h Handler) {
@@ -72,15 +72,54 @@ func (a *App) readConfig() {
 }
 
 func (a *App) initializeStores(config configs.Config) {
-	mongoDB, err := driver.NewMongoConfigs(config).ConnectToMongo(a.Logger)
+	var err error
+
+	a.Mongo, err = GetNewMongoDB(a.Logger, config)
 	if err != nil {
-		a.Logger.Errorf("cannot connect to mongo: %s", err.Error())
+		go mongoRetry(nil, a)
 	}
 
-	sqlDB, err := driver.NewSQLConfigs(config).ConnectToSQL(a.Logger)
+	a.SQL, err = GetNewSQLClient(a.Logger, config)
 	if err != nil {
-		a.Logger.Errorf("cannot connect to mysql: %s", err.Error())
+		go sqlRetry(nil, a)
 	}
+}
 
-	a.DataStore = DataStore{MongoDB: mongoDB, SQLDB: sqlDB}
+const maxRetries = 1
+const retryDuration = 3
+
+func mongoRetry(config configs.Config, app *App) {
+	for i := 0; i < maxRetries; i++ {
+		time.Sleep(time.Duration(retryDuration) * time.Second)
+
+		app.Logger.Debug("retrying mongo connection")
+
+		var err error
+
+		app.Mongo, err = GetNewMongoDB(app.Logger, config)
+
+		if err == nil {
+			app.Logger.Info("mongo initialized successfully")
+
+			break
+		}
+	}
+}
+
+func sqlRetry(config configs.Config, app *App) {
+	for i := 0; i < maxRetries; i++ {
+		time.Sleep(time.Duration(retryDuration) * time.Second)
+
+		app.Logger.Debug("retrying sql connection")
+
+		var err error
+
+		app.SQL, err = GetNewSQLClient(app.Logger, config)
+
+		if err == nil {
+			app.Logger.Info("sql initialized successfully")
+
+			break
+		}
+	}
 }

@@ -22,6 +22,7 @@ func NewConfigLoader(confLocation string) config {
 	if env == "" {
 		env = "local"
 	}
+
 	overrideFile := confLocation + "/." + env + ".env"
 
 	err1 := godotenv.Load(overrideFile)

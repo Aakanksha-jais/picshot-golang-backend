@@ -16,9 +16,9 @@ func main() {
 	app := app.New()
 
 	// Dependency Injection
-	blogStore := storeBlog.New(app.MongoDB)
-	tagStore := storeTag.New(app.MongoDB)
-	accountStore := storeAccount.New(app.SQLDB)
+	blogStore := storeBlog.New()
+	tagStore := storeTag.New()
+	accountStore := storeAccount.New()
 
 	blogService := serviceBlog.New(blogStore, tagStore)
 	accountService := serviceAccount.New(accountStore, blogService)
