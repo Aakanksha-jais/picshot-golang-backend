@@ -5,26 +5,23 @@ import (
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type tag struct {
-	db     *mongo.Database
-	logger log.Logger
 }
 
-func New(db *mongo.Database) stores.Tag {
-	return tag{db: db}
+func New() stores.Tag {
+	return tag{}
 }
 
 // GetByName retrieves a tag by its name.
 // A tag name uniquely identifies a tag entity.
 // The tag entity has tag name and list of blog_id's associated with the tag.
 func (t tag) GetByName(c *app.Context, name string) (*models.Tag, error) {
-	collection := t.db.Collection("tags")
+	collection := c.Mongo.DB().Collection("tags")
 
 	var tag models.Tag
 
@@ -50,7 +47,7 @@ func (t tag) GetByName(c *app.Context, name string) (*models.Tag, error) {
 // AddBlogID adds blog_id to given list of tags.
 // Tags are created if they do not exist already.
 func (t tag) AddBlogID(c *app.Context, blogID string, tags []string) ([]*models.Tag, error) {
-	collection := t.db.Collection("tags")
+	collection := c.Mongo.DB().Collection("tags")
 
 	var res []*models.Tag
 
@@ -80,7 +77,7 @@ func (t tag) AddBlogID(c *app.Context, blogID string, tags []string) ([]*models.
 
 // RemoveBlogID removes blog_id from given list of tags.
 func (t tag) RemoveBlogID(c *app.Context, blogID string, tags []string) ([]*models.Tag, error) {
-	collection := t.db.Collection("tags")
+	collection := c.Mongo.DB().Collection("tags")
 
 	var res []*models.Tag
 

@@ -11,17 +11,14 @@ import (
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 )
 
 type account struct {
-	db     *sql.DB
-	logger log.Logger
 }
 
-func New(db *sql.DB) stores.Account {
-	return account{db: db}
+func New() stores.Account {
+	return account{}
 }
 
 const (
@@ -37,7 +34,7 @@ func (a account) GetAll(c *app.Context, filter *models.Account) ([]*models.Accou
 
 	accounts := make([]*models.Account, 0)
 
-	rows, err := a.db.QueryContext(c, query, qp...)
+	rows, err := c.SQL.SQLDB().QueryContext(c, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -55,7 +52,7 @@ func (a account) GetAll(c *app.Context, filter *models.Account) ([]*models.Accou
 		accounts = append(accounts, &account)
 	}
 
-	a.logger.Debugf("successful execution of 'GetAll' accounts in storage layer")
+	c.Logger.Debugf("successful execution of 'GetAll' accounts in storage layer")
 	return accounts, nil
 }
 
@@ -64,7 +61,7 @@ func (a account) Get(c *app.Context, filter *models.Account) (*models.Account, e
 	where, qp := filter.WhereClause()
 	query := get + where
 
-	rows, err := a.db.QueryContext(c, query, qp...)
+	rows, err := c.SQL.SQLDB().QueryContext(c, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -89,7 +86,7 @@ func (a account) Get(c *app.Context, filter *models.Account) (*models.Account, e
 
 // Create creates an account.
 func (a account) Create(c *app.Context, model *models.Account) (*models.Account, error) {
-	res, err := a.db.ExecContext(c, insert, model.UserName, model.Password, model.Email, model.FName, model.LName, model.PhoneNo, model.Status)
+	res, err := c.SQL.SQLDB().ExecContext(c, insert, model.UserName, model.Password, model.Email, model.FName, model.LName, model.PhoneNo, model.Status)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -115,7 +112,7 @@ func (a account) Update(c *app.Context, model *models.Account) (*models.Account,
 
 	c.Logger.Debugf("query executed: %s with params %v", query, qp)
 
-	res, err := a.db.ExecContext(c, query, qp...)
+	res, err := c.SQL.SQLDB().ExecContext(c, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -188,7 +185,7 @@ func generateSetClause(model *models.Account) (setClause string, qp []interface{
 // Delete updates a delete request for an account and sets its status to inactive.
 // Account is then permanently deleted after 30 days of inactivity.
 func (a account) Delete(c *app.Context, id int64) error {
-	_, err := a.db.ExecContext(c, "UPDATE accounts SET del_req = ?, status = ? WHERE id = ?", time.Now(), "INACTIVE", id)
+	_, err := c.SQL.SQLDB().ExecContext(c, "UPDATE accounts SET del_req = ?, status = ? WHERE id = ?", time.Now(), "INACTIVE", id)
 	if err != nil {
 		return errors.DBError{Err: err}
 	}

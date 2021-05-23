@@ -33,13 +33,14 @@ type Blog interface {
 
 	// Get is used to retrieve a SINGLE blog that matches the filter.
 	// A blog can be filtered by account_id, blog_id and title.
-	Get(c *app.Context, filter models.Blog) (*models.Blog, error)
+	Get(c *app.Context, filter *models.Blog) (*models.Blog, error)
 
 	// Create is used to create a new blog.
-	Create(c *app.Context, model models.Blog) (*models.Blog, error)
+	Create(c *app.Context, model *models.Blog) (*models.Blog, error)
 
 	// Update updates the blog by its ID.
-	Update(c *app.Context, model models.Blog) (*models.Blog, error)
+	// Images and Tags can be added and not deleted todo
+	Update(c *app.Context, model *models.Blog) (*models.Blog, error)
 
 	// Delete deletes a blog by its ID.
 	Delete(c *app.Context, blogID string) error

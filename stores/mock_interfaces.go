@@ -5,10 +5,10 @@
 package stores
 
 import (
-	context "context"
 	reflect "reflect"
 
 	models "github.com/Aakanksha-jais/picshot-golang-backend/models"
+	app "github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -36,77 +36,77 @@ func (m *MockAccount) EXPECT() *MockAccountMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockAccount) Create(ctx context.Context, model *models.Account) (*models.Account, error) {
+func (m *MockAccount) Create(c *app.Context, model *models.Account) (*models.Account, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, model)
+	ret := m.ctrl.Call(m, "Create", c, model)
 	ret0, _ := ret[0].(*models.Account)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockAccountMockRecorder) Create(ctx, model interface{}) *gomock.Call {
+func (mr *MockAccountMockRecorder) Create(c, model interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockAccount)(nil).Create), ctx, model)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockAccount)(nil).Create), c, model)
 }
 
 // Delete mocks base method.
-func (m *MockAccount) Delete(ctx context.Context, id int64) error {
+func (m *MockAccount) Delete(c *app.Context, id int64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, id)
+	ret := m.ctrl.Call(m, "Delete", c, id)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockAccountMockRecorder) Delete(ctx, id interface{}) *gomock.Call {
+func (mr *MockAccountMockRecorder) Delete(c, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockAccount)(nil).Delete), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockAccount)(nil).Delete), c, id)
 }
 
 // Get mocks base method.
-func (m *MockAccount) Get(ctx context.Context, filter *models.Account) (*models.Account, error) {
+func (m *MockAccount) Get(c *app.Context, filter *models.Account) (*models.Account, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx, filter)
+	ret := m.ctrl.Call(m, "Get", c, filter)
 	ret0, _ := ret[0].(*models.Account)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockAccountMockRecorder) Get(ctx, filter interface{}) *gomock.Call {
+func (mr *MockAccountMockRecorder) Get(c, filter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAccount)(nil).Get), ctx, filter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAccount)(nil).Get), c, filter)
 }
 
 // GetAll mocks base method.
-func (m *MockAccount) GetAll(ctx context.Context, filter *models.Account) ([]*models.Account, error) {
+func (m *MockAccount) GetAll(c *app.Context, filter *models.Account) ([]*models.Account, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAll", ctx, filter)
+	ret := m.ctrl.Call(m, "GetAll", c, filter)
 	ret0, _ := ret[0].([]*models.Account)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAll indicates an expected call of GetAll.
-func (mr *MockAccountMockRecorder) GetAll(ctx, filter interface{}) *gomock.Call {
+func (mr *MockAccountMockRecorder) GetAll(c, filter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockAccount)(nil).GetAll), ctx, filter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockAccount)(nil).GetAll), c, filter)
 }
 
 // Update mocks base method.
-func (m *MockAccount) Update(ctx context.Context, model *models.Account) (*models.Account, error) {
+func (m *MockAccount) Update(c *app.Context, model *models.Account) (*models.Account, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", ctx, model)
+	ret := m.ctrl.Call(m, "Update", c, model)
 	ret0, _ := ret[0].(*models.Account)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockAccountMockRecorder) Update(ctx, model interface{}) *gomock.Call {
+func (mr *MockAccountMockRecorder) Update(c, model interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockAccount)(nil).Update), ctx, model)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockAccount)(nil).Update), c, model)
 }
 
 // MockBlog is a mock of Blog interface.
@@ -133,92 +133,92 @@ func (m *MockBlog) EXPECT() *MockBlogMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockBlog) Create(ctx context.Context, model models.Blog) (*models.Blog, error) {
+func (m *MockBlog) Create(c *app.Context, model *models.Blog) (*models.Blog, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, model)
+	ret := m.ctrl.Call(m, "Create", c, model)
 	ret0, _ := ret[0].(*models.Blog)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockBlogMockRecorder) Create(ctx, model interface{}) *gomock.Call {
+func (mr *MockBlogMockRecorder) Create(c, model interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockBlog)(nil).Create), ctx, model)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockBlog)(nil).Create), c, model)
 }
 
 // Delete mocks base method.
-func (m *MockBlog) Delete(ctx context.Context, blogID string) error {
+func (m *MockBlog) Delete(c *app.Context, blogID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, blogID)
+	ret := m.ctrl.Call(m, "Delete", c, blogID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockBlogMockRecorder) Delete(ctx, blogID interface{}) *gomock.Call {
+func (mr *MockBlogMockRecorder) Delete(c, blogID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockBlog)(nil).Delete), ctx, blogID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockBlog)(nil).Delete), c, blogID)
 }
 
 // Get mocks base method.
-func (m *MockBlog) Get(ctx context.Context, filter models.Blog) (*models.Blog, error) {
+func (m *MockBlog) Get(c *app.Context, filter *models.Blog) (*models.Blog, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx, filter)
+	ret := m.ctrl.Call(m, "Get", c, filter)
 	ret0, _ := ret[0].(*models.Blog)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockBlogMockRecorder) Get(ctx, filter interface{}) *gomock.Call {
+func (mr *MockBlogMockRecorder) Get(c, filter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockBlog)(nil).Get), ctx, filter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockBlog)(nil).Get), c, filter)
 }
 
 // GetAll mocks base method.
-func (m *MockBlog) GetAll(ctx context.Context, filter models.Blog) ([]*models.Blog, error) {
+func (m *MockBlog) GetAll(c *app.Context, filter models.Blog) ([]*models.Blog, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAll", ctx, filter)
+	ret := m.ctrl.Call(m, "GetAll", c, filter)
 	ret0, _ := ret[0].([]*models.Blog)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAll indicates an expected call of GetAll.
-func (mr *MockBlogMockRecorder) GetAll(ctx, filter interface{}) *gomock.Call {
+func (mr *MockBlogMockRecorder) GetAll(c, filter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockBlog)(nil).GetAll), ctx, filter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockBlog)(nil).GetAll), c, filter)
 }
 
 // GetByIDs mocks base method.
-func (m *MockBlog) GetByIDs(ctx context.Context, idList []string) ([]*models.Blog, error) {
+func (m *MockBlog) GetByIDs(c *app.Context, idList []string) ([]*models.Blog, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByIDs", ctx, idList)
+	ret := m.ctrl.Call(m, "GetByIDs", c, idList)
 	ret0, _ := ret[0].([]*models.Blog)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByIDs indicates an expected call of GetByIDs.
-func (mr *MockBlogMockRecorder) GetByIDs(ctx, idList interface{}) *gomock.Call {
+func (mr *MockBlogMockRecorder) GetByIDs(c, idList interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByIDs", reflect.TypeOf((*MockBlog)(nil).GetByIDs), ctx, idList)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByIDs", reflect.TypeOf((*MockBlog)(nil).GetByIDs), c, idList)
 }
 
 // Update mocks base method.
-func (m *MockBlog) Update(ctx context.Context, model models.Blog) (*models.Blog, error) {
+func (m *MockBlog) Update(c *app.Context, model *models.Blog) (*models.Blog, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", ctx, model)
+	ret := m.ctrl.Call(m, "Update", c, model)
 	ret0, _ := ret[0].(*models.Blog)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockBlogMockRecorder) Update(ctx, model interface{}) *gomock.Call {
+func (mr *MockBlogMockRecorder) Update(c, model interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockBlog)(nil).Update), ctx, model)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockBlog)(nil).Update), c, model)
 }
 
 // MockTag is a mock of Tag interface.
@@ -245,46 +245,46 @@ func (m *MockTag) EXPECT() *MockTagMockRecorder {
 }
 
 // AddBlogID mocks base method.
-func (m *MockTag) AddBlogID(ctx context.Context, blogID string, tags []string) ([]*models.Tag, error) {
+func (m *MockTag) AddBlogID(c *app.Context, blogID string, tags []string) ([]*models.Tag, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddBlogID", ctx, blogID, tags)
+	ret := m.ctrl.Call(m, "AddBlogID", c, blogID, tags)
 	ret0, _ := ret[0].([]*models.Tag)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddBlogID indicates an expected call of AddBlogID.
-func (mr *MockTagMockRecorder) AddBlogID(ctx, blogID, tags interface{}) *gomock.Call {
+func (mr *MockTagMockRecorder) AddBlogID(c, blogID, tags interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBlogID", reflect.TypeOf((*MockTag)(nil).AddBlogID), ctx, blogID, tags)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBlogID", reflect.TypeOf((*MockTag)(nil).AddBlogID), c, blogID, tags)
 }
 
 // GetByName mocks base method.
-func (m *MockTag) GetByName(ctx context.Context, name string) (*models.Tag, error) {
+func (m *MockTag) GetByName(c *app.Context, name string) (*models.Tag, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByName", ctx, name)
+	ret := m.ctrl.Call(m, "GetByName", c, name)
 	ret0, _ := ret[0].(*models.Tag)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByName indicates an expected call of GetByName.
-func (mr *MockTagMockRecorder) GetByName(ctx, name interface{}) *gomock.Call {
+func (mr *MockTagMockRecorder) GetByName(c, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByName", reflect.TypeOf((*MockTag)(nil).GetByName), ctx, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByName", reflect.TypeOf((*MockTag)(nil).GetByName), c, name)
 }
 
 // RemoveBlogID mocks base method.
-func (m *MockTag) RemoveBlogID(ctx context.Context, blogID string, tags []string) ([]*models.Tag, error) {
+func (m *MockTag) RemoveBlogID(c *app.Context, blogID string, tags []string) ([]*models.Tag, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveBlogID", ctx, blogID, tags)
+	ret := m.ctrl.Call(m, "RemoveBlogID", c, blogID, tags)
 	ret0, _ := ret[0].([]*models.Tag)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RemoveBlogID indicates an expected call of RemoveBlogID.
-func (mr *MockTagMockRecorder) RemoveBlogID(ctx, blogID, tags interface{}) *gomock.Call {
+func (mr *MockTagMockRecorder) RemoveBlogID(c, blogID, tags interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveBlogID", reflect.TypeOf((*MockTag)(nil).RemoveBlogID), ctx, blogID, tags)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveBlogID", reflect.TypeOf((*MockTag)(nil).RemoveBlogID), c, blogID, tags)
 }
