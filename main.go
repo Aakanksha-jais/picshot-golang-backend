@@ -37,6 +37,8 @@ func main() {
 
 	// Routes for Blogs
 	app.GET("/blogs", blogHandler.GetAll)
+	app.GET("/blogs/{blogid}", blogHandler.Get)
+	app.GET("/{accountid}/blogs", blogHandler.GetBlogsByUser)
 
 	app.Start()
 }

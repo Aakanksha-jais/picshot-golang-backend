@@ -46,7 +46,12 @@ func (b blog) GetByID(c *app.Context, id string) (*models.Blog, error) {
 		return nil, errors.MissingParam{Param: "blog_id"}
 	}
 
-	return b.blogStore.Get(c, &models.Blog{BlogID: id})
+	blog, err := b.blogStore.Get(c, &models.Blog{BlogID: id})
+	if blog == nil {
+		return nil, errors.EntityNotFound{Entity: "blog", ID: id}
+	}
+
+	return blog, err
 }
 
 // Create is used to create a Blog.

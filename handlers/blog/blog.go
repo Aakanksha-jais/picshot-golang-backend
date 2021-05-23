@@ -26,10 +26,21 @@ func (b blog) GetAll(c *app.Context) (interface{}, error) {
 
 func (b blog) GetBlogsByUser(c *app.Context) (interface{}, error) {
 	accountID := c.Request.PathParam("accountid")
+
+	if accountID == "" {
+		return nil, errors.MissingParam{Param: "account ID"}
+	}
+
 	id, err := strconv.Atoi(accountID)
 	if err != nil {
 		return nil, errors.InvalidParam{Param: "account ID"}
 	}
 
 	return b.service.GetAll(c, &models.Blog{AccountID: int64(id)})
+}
+
+func (b blog) Get(c *app.Context) (interface{}, error) {
+	blogID := c.Request.PathParam("blogid")
+
+	return b.service.GetByID(c, blogID)
 }
