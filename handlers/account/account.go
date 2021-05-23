@@ -12,7 +12,6 @@ import (
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
 
-	"github.com/Aakanksha-jais/picshot-golang-backend/handlers"
 	"github.com/Aakanksha-jais/picshot-golang-backend/services"
 )
 
@@ -122,6 +121,6 @@ func (a account) CheckAvailability(c *app.Context) (interface{}, error) {
 	return nil, a.service.CheckAvailability(c, &models.User{UserName: username, PhoneNo: sql.NullString{String: phone, Valid: true}, Email: sql.NullString{String: email, Valid: true}})
 }
 
-func New(service services.Account) handlers.Account {
+func New(service services.Account) account {
 	return account{service: service}
 }
