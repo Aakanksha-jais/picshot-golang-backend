@@ -6,7 +6,6 @@ import (
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/types"
-	"github.com/Aakanksha-jais/picshot-golang-backend/services"
 	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 )
 
@@ -15,7 +14,7 @@ type blog struct {
 	tagStore  stores.Tag
 }
 
-func New(blogStore stores.Blog, tagStore stores.Tag) services.Blog {
+func New(blogStore stores.Blog, tagStore stores.Tag) blog {
 	return blog{
 		blogStore: blogStore,
 		tagStore:  tagStore,
@@ -23,7 +22,11 @@ func New(blogStore stores.Blog, tagStore stores.Tag) services.Blog {
 }
 
 // GetAll is used to retrieve all blogs that match the filter.
-func (b blog) GetAll(c *app.Context, filter models.Blog) ([]*models.Blog, error) {
+func (b blog) GetAll(c *app.Context, filter *models.Blog) ([]*models.Blog, error) {
+	if filter == nil {
+		filter = &models.Blog{}
+	}
+
 	return b.blogStore.GetAll(c, filter)
 }
 
@@ -43,17 +46,17 @@ func (b blog) GetByID(c *app.Context, id string) (*models.Blog, error) {
 		return nil, errors.MissingParam{Param: "blog_id"}
 	}
 
-	return b.blogStore.Get(c, models.Blog{BlogID: id})
+	return b.blogStore.Get(c, &models.Blog{BlogID: id})
 }
 
 // Create is used to create a Blog.
 // Missing params check for fields should be done on the frontend as well.
-func (b blog) Create(c *app.Context, model models.Blog) (*models.Blog, error) {
+func (b blog) Create(c *app.Context, model *models.Blog) (*models.Blog, error) {
 	id := model.BlogID
 
 	model.BlogID = "" // blog_id is automatically assigned and should remain empty before creation of blog
 
-	err := checkMissingParams(model)
+	err := checkMissingParams(*model)
 	if err != nil {
 		return nil, err
 	}
@@ -98,14 +101,14 @@ func checkMissingParams(model models.Blog) error {
 // Update updates a blog based on its id.
 // Parameters that are meant to be updated are populated, else left empty.
 // Images can only be added, not deleted.
-func (b blog) Update(c *app.Context, model models.Blog) (*models.Blog, error) {
+func (b blog) Update(c *app.Context, model *models.Blog) (*models.Blog, error) {
 	id := model.BlogID
 
 	if id == "" {
 		return nil, errors.MissingParam{Param: "blog_id"}
 	}
 
-	blog, err := b.blogStore.Get(c, models.Blog{BlogID: id})
+	blog, err := b.blogStore.Get(c, &models.Blog{BlogID: id})
 	if err != nil {
 		return nil, errors.EntityNotFound{Entity: "blog", ID: id}
 	}
@@ -140,7 +143,7 @@ func (b blog) Delete(c *app.Context, id string) error {
 		return errors.MissingParam{Param: "blog_id"}
 	}
 
-	blog, err := b.blogStore.Get(c, models.Blog{BlogID: id})
+	blog, err := b.blogStore.Get(c, &models.Blog{BlogID: id})
 	if err != nil {
 		return errors.EntityNotFound{Entity: "blog", ID: id}
 	}

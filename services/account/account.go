@@ -64,7 +64,7 @@ func (a account) GetAccountWithBlogs(c *app.Context, username string) (*models.A
 		return nil, errors.EntityNotFound{Entity: "user"}
 	}
 
-	blogs, err := a.blogService.GetAll(c, models.Blog{AccountID: account.ID})
+	blogs, err := a.blogService.GetAll(c, &models.Blog{AccountID: account.ID})
 
 	for i := range blogs {
 		if blogs[i] != nil {

@@ -40,7 +40,7 @@ type Account interface {
 
 type Blog interface {
 	// GetAll retrieve all blogs that match the filter.
-	GetAll(c *app.Context, filter models.Blog) ([]*models.Blog, error)
+	GetAll(c *app.Context, filter *models.Blog) ([]*models.Blog, error)
 
 	// GetAllByTagName retrieves all blogs by tag name.
 	GetAllByTagName(c *app.Context, name string) ([]*models.Blog, error)
@@ -49,12 +49,12 @@ type Blog interface {
 	GetByID(c *app.Context, id string) (*models.Blog, error)
 
 	// Create creates a Blog.
-	Create(c *app.Context, model models.Blog) (*models.Blog, error)
+	Create(c *app.Context, model *models.Blog) (*models.Blog, error)
 
 	// Update updates a blog based on its id.
 	// Parameters that are meant to be updated are populated, else left empty.
 	// Images can only be added, not deleted.
-	Update(c *app.Context, model models.Blog) (*models.Blog, error)
+	Update(c *app.Context, model *models.Blog) (*models.Blog, error)
 
 	// Delete deletes a blog based on its id.
 	Delete(c *app.Context, id string) error
