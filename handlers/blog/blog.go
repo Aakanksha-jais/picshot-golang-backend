@@ -44,3 +44,16 @@ func (b blog) Get(c *app.Context) (interface{}, error) {
 
 	return b.service.GetByID(c, blogID)
 }
+
+func (b blog) Create(c *app.Context) (interface{}, error) {
+	fileHeaders := c.Request.ParseImages()
+
+	var blog models.Blog
+
+	err := c.Request.Unmarshal(&blog)
+	if err != nil {
+		return nil, err
+	}
+
+	return b.service.Create(c, &blog, fileHeaders)
+}

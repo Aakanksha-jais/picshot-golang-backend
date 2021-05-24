@@ -83,6 +83,11 @@ func (a *App) initializeStores(config configs.Config) {
 	if err != nil {
 		go sqlRetry(nil, a)
 	}
+
+	a.S3, err = GetNewS3(a.Logger, config)
+	if err != nil {
+		go s3Retry(nil, a)
+	}
 }
 
 const maxRetries = 1
@@ -118,6 +123,24 @@ func sqlRetry(config configs.Config, app *App) {
 
 		if err == nil {
 			app.Logger.Info("sql initialized successfully")
+
+			break
+		}
+	}
+}
+
+func s3Retry(config configs.Config, app *App) {
+	for i := 0; i < maxRetries; i++ {
+		time.Sleep(time.Duration(retryDuration) * time.Second)
+
+		app.Logger.Debug("retrying s3 session creation")
+
+		var err error
+
+		app.S3, err = GetNewS3(app.Logger, config)
+
+		if err == nil {
+			app.Logger.Info("s3 session initialized successfully")
 
 			break
 		}

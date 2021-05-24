@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
@@ -47,10 +48,21 @@ func (r *Request) PathParam(key string) string {
 	return r.pathParams[key]
 }
 
+const maxSize = int64(32 << 20) // max 32 MB size
+
+func (r *Request) ParseImages() []*multipart.FileHeader {
+	err := r.req.ParseMultipartForm(maxSize)
+	if err != nil {
+		return nil
+	}
+
+	return r.req.MultipartForm.File["image"]
+}
+
 func (r *Request) Unmarshal(i interface{}) error {
 	body, err := r.body()
 	if err != nil {
-		return err
+		return errors.BodyRead{Err: err}
 	}
 
 	err = json.Unmarshal(body, i)

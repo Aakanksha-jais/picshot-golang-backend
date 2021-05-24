@@ -1,6 +1,8 @@
 package services
 
 import (
+	"mime/multipart"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
@@ -49,7 +51,7 @@ type Blog interface {
 	GetByID(c *app.Context, id string) (*models.Blog, error)
 
 	// Create creates a Blog.
-	Create(c *app.Context, model *models.Blog) (*models.Blog, error)
+	Create(c *app.Context, model *models.Blog, images []*multipart.FileHeader) (*models.Blog, error)
 
 	// Update updates a blog based on its id.
 	// Parameters that are meant to be updated are populated, else left empty.

@@ -1,6 +1,12 @@
 package blog
 
 import (
+	"crypto/sha1"
+	"fmt"
+	"mime/multipart"
+	"path/filepath"
+	"time"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
@@ -10,8 +16,9 @@ import (
 )
 
 type blog struct {
-	blogStore stores.Blog
-	tagStore  stores.Tag
+	blogStore  stores.Blog
+	tagStore   stores.Tag
+	imageStore stores.Image
 }
 
 func New(blogStore stores.Blog, tagStore stores.Tag) blog {
@@ -56,7 +63,7 @@ func (b blog) GetByID(c *app.Context, id string) (*models.Blog, error) {
 
 // Create is used to create a Blog.
 // Missing params check for fields should be done on the frontend as well.
-func (b blog) Create(c *app.Context, model *models.Blog) (*models.Blog, error) {
+func (b blog) Create(c *app.Context, model *models.Blog, images []*multipart.FileHeader) (*models.Blog, error) {
 	id := model.BlogID
 
 	model.BlogID = "" // blog_id is automatically assigned and should remain empty before creation of blog
@@ -68,7 +75,16 @@ func (b blog) Create(c *app.Context, model *models.Blog) (*models.Blog, error) {
 
 	model.CreatedOn = types.Date{}.Today().String()
 
-	// todo: store images to cloud and add image urls to model
+	for _, img := range images { //todo concurrently
+		name := fmt.Sprintf("%v/%v/%v_%v%v", time.Now().Year(), time.Now().Month().String(), model.AccountID, sha1.New().Sum(nil), filepath.Ext(img.Filename))
+
+		err := b.imageStore.Upload(c, img, name)
+		if err != nil {
+			return nil, err
+		}
+
+		model.Images = append(model.Images, fmt.Sprintf("https://%v.s3.ap-south-1.amazonaws.com/%s", c.Config.Get("AWS_BUCKET"), name))
+	}
 
 	res, err := b.blogStore.Create(c, model)
 	if err != nil {
@@ -78,7 +94,7 @@ func (b blog) Create(c *app.Context, model *models.Blog) (*models.Blog, error) {
 	_, err = b.tagStore.AddBlogID(c, id, model.Tags)
 	if err != nil {
 		// tag store errors are not critical, so need not be returned to the delivery layer.
-		c.Logger.Errorf("Cannot add Blog ID %s to tags %v", id, model.Tags)
+		c.Logger.Errorf("cannot add blog id %s to tags %v", id, model.Tags)
 	}
 
 	return res, nil

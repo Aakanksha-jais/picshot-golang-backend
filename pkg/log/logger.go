@@ -31,6 +31,8 @@ type Logger interface {
 	// To register FATAL Logs.
 	Fatal(args ...interface{})
 	Fatalf(format string, args ...interface{})
+
+	Log(args ...interface{})
 }
 
 type logger struct {
@@ -65,8 +67,12 @@ func (l *logger) log(level level, format string, args ...interface{}) {
 	} else {
 		_ = json.NewEncoder(l.out).Encode(ll)
 	}
-
 }
+
+func (l *logger) Log(args ...interface{}) {
+	l.log(INFO, "", args...)
+}
+
 func (l *logger) Debug(args ...interface{}) {
 	l.log(DEBUG, "", args...)
 }
