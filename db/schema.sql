@@ -1,7 +1,11 @@
+-- name: drop
 DROP Database IF EXISTS picshot;
+-- name: create
 CREATE DATABASE picshot;
+-- name: use
 USE picshot;
 
+-- name: create-table
 CREATE TABLE `accounts` (
                                   `id` int(11) NOT NULL AUTO_INCREMENT,
                                   `user_name` VARCHAR(255) NOT NULL,
