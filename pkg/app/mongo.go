@@ -100,7 +100,7 @@ func GetNewMongoDB(logger log.Logger, config configs.Config) (MongoDB, error) {
 		return mongoDB{}, err
 	}
 
-	logger.Infof("connected to mongo: [ %v@%v at port %v ]", mongoConfig.Username, mongoConfig.HostName, mongoConfig.Port)
+	logger.Infof("connected to mongo: [%v@%v at port %v]", mongoConfig.Username, mongoConfig.HostName, mongoConfig.Port)
 
 	return mongoDB{Database: client.Database(mongoConfig.Database), config: mongoConfig}, nil
 }

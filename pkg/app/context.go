@@ -2,27 +2,19 @@ package app
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 )
 
 type Context struct {
 	context.Context
-	Request  *Request
-	Response http.ResponseWriter
+	Request *Request
 	*App
 }
 
-func NewContext(r *Request, w http.ResponseWriter, app *App) *Context {
-	return &Context{Request: r, Response: w, App: app}
+func NewContext(r *Request, app *App) *Context {
+	return &Context{Request: r, App: app}
 }
 
-func (c *Context) SetAuthHeader(token string) {
-	c.Response.Header().Add("Authorization", fmt.Sprintf("Bearer %s", token))
-}
-
-func (c *Context) reset(r *Request, w http.ResponseWriter) {
+func (c *Context) reset(r *Request) {
 	c.Context = nil
 	c.Request = r
-	c.Response = w
 }

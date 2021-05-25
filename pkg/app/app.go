@@ -11,8 +11,8 @@ import (
 
 type App struct {
 	server *server
-	Logger log.Logger
-	Config configs.Config
+	log.Logger
+	configs.Config
 	DataStore
 }
 
@@ -29,6 +29,8 @@ func New() *App {
 
 	// initialize server
 	app.server = NewServer(app)
+
+	InitializeDB(app.Mongo.DB(), app.SQL.SQLDB(), app.Logger) // todo: Remove this (only for testing)
 
 	return app
 }

@@ -59,6 +59,10 @@ func (r *Request) ParseImages() []*multipart.FileHeader {
 	return r.req.MultipartForm.File["image"]
 }
 
+func (r *Request) FormValue(key string) string {
+	return r.req.FormValue(key)
+}
+
 func (r *Request) Unmarshal(i interface{}) error {
 	body, err := r.body()
 	if err != nil {
