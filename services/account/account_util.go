@@ -5,9 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
-
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 )
 

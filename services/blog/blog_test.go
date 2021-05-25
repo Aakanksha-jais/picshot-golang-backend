@@ -16,18 +16,19 @@ import (
 	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 )
 
-func initializeTest(t *testing.T) (*stores.MockBlog, *stores.MockTag, *app.Context, blog) {
+func initializeTest(t *testing.T) (*stores.MockBlog, *stores.MockTag, *stores.MockImage, *app.Context, blog) {
 	ctrl := gomock.NewController(t)
 	mockBlogStore := stores.NewMockBlog(ctrl)
 	mockTagStore := stores.NewMockTag(ctrl)
-	ctx := app.NewContext(nil, nil, &app.App{Logger: log.NewLogger()})
-	mockService := New(mockBlogStore, mockTagStore)
+	mockImageStore := stores.NewMockImage(ctrl)
+	ctx := app.NewContext(nil, &app.App{Logger: log.NewLogger()})
+	mockService := New(mockBlogStore, mockTagStore, mockImageStore)
 
-	return mockBlogStore, mockTagStore, ctx, mockService
+	return mockBlogStore, mockTagStore, mockImageStore, ctx, mockService
 }
 
 func TestBlog_GetAll(t *testing.T) {
-	mockBlogStore, _, ctx, mockService := initializeTest(t)
+	mockBlogStore, _, _, ctx, mockService := initializeTest(t)
 
 	tests := []struct {
 		description string
@@ -80,7 +81,7 @@ func TestBlog_GetAll(t *testing.T) {
 }
 
 func TestBlog_GetAll_NilFilter(t *testing.T) {
-	mockBlogStore, _, ctx, mockService := initializeTest(t)
+	mockBlogStore, _, _, ctx, mockService := initializeTest(t)
 
 	mockBlogStore.EXPECT().GetAll(gomock.Any(), &models.Blog{}).
 		Return([]*models.Blog{
@@ -123,7 +124,7 @@ func TestBlog_GetAll_NilFilter(t *testing.T) {
 }
 
 func TestBlog_GetAll_Error(t *testing.T) {
-	mockBlogStore, _, ctx, mockService := initializeTest(t)
+	mockBlogStore, _, _, ctx, mockService := initializeTest(t)
 
 	mockBlogStore.EXPECT().GetAll(gomock.Any(), &models.Blog{Title: "title5"}).
 		Return(nil, errors.DBError{})
