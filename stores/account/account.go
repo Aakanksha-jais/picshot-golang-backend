@@ -58,10 +58,12 @@ func (a account) GetAll(ctx *app.Context, filter *models.Account) ([]*models.Acc
 
 // Get retrieves a single account that matches a given filter.
 func (a account) Get(ctx *app.Context, filter *models.Account) (*models.Account, error) {
+	db:=ctx.SQL.SQLDB()
+
 	where, qp := filter.WhereClause()
 	query := get + where
 
-	rows, err := ctx.SQL.SQLDB().QueryContext(ctx, query, qp...)
+	rows, err := db.QueryContext(ctx, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -86,7 +88,9 @@ func (a account) Get(ctx *app.Context, filter *models.Account) (*models.Account,
 
 // Create creates an account.
 func (a account) Create(ctx *app.Context, model *models.Account) (*models.Account, error) {
-	res, err := ctx.SQL.SQLDB().ExecContext(ctx, insert, model.UserName, model.Password, model.Email, model.FName, model.LName, model.PhoneNo, model.Status)
+	db:= ctx.SQL.SQLDB()
+
+	res, err := db.ExecContext(ctx, insert, model.UserName, model.Password, model.Email, model.FName, model.LName, model.PhoneNo, model.Status)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -106,13 +110,15 @@ func (a account) Create(ctx *app.Context, model *models.Account) (*models.Accoun
 
 // Update updates an account.
 func (a account) Update(ctx *app.Context, model *models.Account) (*models.Account, error) {
+	db:= ctx.SQL.SQLDB()
+
 	query, qp := generateSetClause(model)
 	query = fmt.Sprintf("%s WHERE id = ?;", query)
-	qp = append(qp, int(model.ID))
+	qp = append(qp, model.ID)
 
 	ctx.Logger.Debugf("query executed: %s with params %v", query, qp)
 
-	res, err := ctx.SQL.SQLDB().ExecContext(ctx, query, qp...)
+	res, err := db.ExecContext(ctx, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -171,7 +177,7 @@ func generateSetClause(model *models.Account) (setClause string, qp []interface{
 	}
 
 	// todo update del req
-	if model.DelRequest != nil && !model.DelRequest.Valid {
+	if model.DelRequest.Valid {
 		setClause += " del_req = ?,"
 
 		qp = append(qp, sql.NullTime{})

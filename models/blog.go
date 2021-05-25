@@ -1,6 +1,9 @@
 package models
 
-import "go.mongodb.org/mongo-driver/bson"
+import (
+	"go.mongodb.org/mongo-driver/bson"
+	"time"
+)
 
 // Blog is filterable by blog id, account id and title ONLY.
 type Blog struct {
@@ -10,7 +13,7 @@ type Blog struct {
 	Summary   string   `bson:"summary" json:"summary"`       // Summary by-line
 	Content   string   `bson:"content" json:"content"`       // Detailed Content of Blog
 	Tags      []string `bson:"tags" json:"tags"`             // List of Tags associated with the Blog
-	CreatedOn string   `bson:"created_on" json:"created_on"` // Date of Creation of Blog
+	CreatedOn time.Time   `bson:"created_on" json:"created_on"` // Date of Creation of Blog
 	Images    []string `bson:"images" json:"images"`         // URL of images stored in cloud
 }
 

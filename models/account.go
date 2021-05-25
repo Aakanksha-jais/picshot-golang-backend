@@ -10,10 +10,10 @@ import (
 
 type Account struct {
 	User                     // Details of the User
-	PwdUpdate  *sql.NullTime // Time Stamp of most recent Password Update
+	PwdUpdate  sql.NullTime // Time Stamp of most recent Password Update
 	Blogs      []Blog        // List of Blogs posted by Account
 	CreatedAt  time.Time     // Time of Creation of Account
-	DelRequest *sql.NullTime // Time Stamp of Account Delete Request
+	DelRequest sql.NullTime // Time Stamp of Account Delete Request
 	Status     string        // Account Active or Inactive
 }
 

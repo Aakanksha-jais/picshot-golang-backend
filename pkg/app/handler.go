@@ -188,11 +188,11 @@ func getAccountResponse(data interface{}) accountResp {
 		a.PhoneNo = &account.PhoneNo.String
 	}
 
-	if account.PwdUpdate != nil {
+	if account.PwdUpdate.Valid {
 		a.PwdUpdate = &account.PwdUpdate.Time
 	}
 
-	if account.DelRequest != nil {
+	if account.DelRequest.Valid {
 		a.DelRequest = &account.DelRequest.Time
 	}
 	return a

@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"encoding/json"
+	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"io/ioutil"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
@@ -18,15 +19,22 @@ func InitializeTestDB(db *mongo.Database, logger log.Logger) {
 		logger.Errorf("cannot read file blogs.json: %v", err.Error())
 	}
 
-	var data []interface{}
+	var (
+		data []interface{}
+		blogs []models.Blog
+	)
 
-	err = json.Unmarshal(bytes, &data)
+	err = json.Unmarshal(bytes, &blogs)
 	if err != nil {
 		logger.Errorf("cannot unmarshal blogs: %v", err.Error())
 	}
 
 	collection := db.Collection("blogs")
 	collection.Drop(ctx)
+
+	for _, blog:= range blogs{
+		data = append(data, blog)
+	}
 
 	_, err = collection.InsertMany(ctx, data)
 	if err != nil {

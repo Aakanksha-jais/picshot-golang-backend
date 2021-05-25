@@ -186,7 +186,7 @@ func (a account) UpdatePassword(ctx *app.Context, oldPassword, newPassword strin
 		return errors.Error{Err: err, Message: "error in hashing password", Type: "password-hash-error"}
 	}
 
-	_, err = a.accountStore.Update(ctx, &models.Account{User: models.User{ID: id.(int64), Password: string(hash)}, PwdUpdate: &sql.NullTime{Time: time.Now(), Valid: true}})
+	_, err = a.accountStore.Update(ctx, &models.Account{User: models.User{ID: id.(int64), Password: string(hash)}, PwdUpdate: sql.NullTime{Time: time.Now(), Valid: true}})
 
 	return err
 }

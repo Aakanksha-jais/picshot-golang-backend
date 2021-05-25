@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mime/multipart"
 	"path/filepath"
+	"time"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
 
@@ -12,7 +13,6 @@ import (
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/types"
 	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 )
 
@@ -76,7 +76,7 @@ func (b blog) Create(ctx *app.Context, model *models.Blog, images []*multipart.F
 		return nil, err
 	}
 
-	model.CreatedOn = types.Date{}.Today().String()
+	model.CreatedOn = time.Now()
 
 	ctx.Logger.Debugf("images to be uploaded: %v", len(images))
 

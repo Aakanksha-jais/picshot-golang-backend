@@ -3,21 +3,24 @@ package blog
 import (
 	"context"
 	"testing"
+	"time"
 
-	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
-
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
-
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/test"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/types"
-	"github.com/stretchr/testify/assert"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/test"
+	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 )
 
 func initializeTest() (*app.Context, stores.Blog) {
 	test.InitializeTestDB(a.Mongo.DB(), a.Logger)
 	return &app.Context{Context: context.TODO(), App: a}, New()
+}
+
+func getTime(date string)time.Time{
+	t,_:=time.Parse("2006-01-02T15:04:05Z07:00", date)
+	return t
 }
 
 func TestBlog_GetAll(t *testing.T) {
@@ -33,11 +36,11 @@ func TestBlog_GetAll(t *testing.T) {
 			description: "get all with empty filter",
 			input:       &models.Blog{},
 			output: []*models.Blog{
-				{BlogID: "id5", AccountID: 3, Title: "title5", Summary: "summary5", Content: "content5", Tags: []string{"tag1"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 16}.String(), Images: []string{"url1"}},
-				{BlogID: "id4", AccountID: 2, Title: "title4", Summary: "summary4", Content: "content4", Tags: []string{"tag3", "tag2"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 15}.String(), Images: []string{"url1"}},
-				{BlogID: "id3", AccountID: 5, Title: "title3", Summary: "summary3", Content: "content3", Tags: []string{}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 16}.String(), Images: []string{"url1"}},
-				{BlogID: "id2", AccountID: 5, Title: "title2", Summary: "summary2", Content: "content2", Tags: []string{"tag1", "tag2"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 20}.String(), Images: []string{"url1", "url2"}},
-				{BlogID: "id1", AccountID: 5, Title: "title1", Summary: "summary1", Content: "content1", Tags: []string{"tag2"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 21}.String(), Images: []string{"url1"}},
+				{BlogID: "id5", AccountID: 3, Title: "title5", Summary: "summary5", Content: "content5", Tags: []string{"tag1"}, CreatedOn: getTime("2021-03-16T15:04:05Z"), Images: []string{"url1"}},
+				{BlogID: "id4", AccountID: 2, Title: "title4", Summary: "summary4", Content: "content4", Tags: []string{"tag3", "tag2"}, CreatedOn: getTime("2021-03-15T15:04:05Z"), Images: []string{"url1"}},
+				{BlogID: "id3", AccountID: 5, Title: "title3", Summary: "summary3", Content: "content3", Tags: []string{}, CreatedOn: getTime("2021-03-16T15:04:05Z"), Images: []string{"url1"}},
+				{BlogID: "id2", AccountID: 5, Title: "title2", Summary: "summary2", Content: "content2", Tags: []string{"tag1", "tag2"}, CreatedOn: getTime("2021-03-20T15:04:05Z"), Images: []string{"url1", "url2"}},
+				{BlogID: "id1", AccountID: 5, Title: "title1", Summary: "summary1", Content: "content1", Tags: []string{"tag2"}, CreatedOn: getTime("2021-03-21T15:04:05Z"), Images: []string{"url1"}},
 			},
 			err: nil,
 		},
@@ -45,9 +48,9 @@ func TestBlog_GetAll(t *testing.T) {
 			description: "get all with account id = 5",
 			input:       &models.Blog{AccountID: 5},
 			output: []*models.Blog{
-				{BlogID: "id3", AccountID: 5, Title: "title3", Summary: "summary3", Content: "content3", Tags: []string{}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 16}.String(), Images: []string{"url1"}},
-				{BlogID: "id2", AccountID: 5, Title: "title2", Summary: "summary2", Content: "content2", Tags: []string{"tag1", "tag2"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 20}.String(), Images: []string{"url1", "url2"}},
-				{BlogID: "id1", AccountID: 5, Title: "title1", Summary: "summary1", Content: "content1", Tags: []string{"tag2"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 21}.String(), Images: []string{"url1"}},
+				{BlogID: "id3", AccountID: 5, Title: "title3", Summary: "summary3", Content: "content3", Tags: []string{}, CreatedOn: getTime("2021-03-16T15:04:05Z"), Images: []string{"url1"}},
+				{BlogID: "id2", AccountID: 5, Title: "title2", Summary: "summary2", Content: "content2", Tags: []string{"tag1", "tag2"}, CreatedOn: getTime("2021-03-20T15:04:05Z"), Images: []string{"url1", "url2"}},
+				{BlogID: "id1", AccountID: 5, Title: "title1", Summary: "summary1", Content: "content1", Tags: []string{"tag2"}, CreatedOn: getTime("2021-03-21T15:04:05Z"), Images: []string{"url1"}},
 			},
 			err: nil,
 		},
@@ -55,7 +58,7 @@ func TestBlog_GetAll(t *testing.T) {
 			description: "get all with title = title5",
 			input:       &models.Blog{Title: "title5"},
 			output: []*models.Blog{
-				{BlogID: "id5", AccountID: 3, Title: "title5", Summary: "summary5", Content: "content5", Tags: []string{"tag1"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 16}.String(), Images: []string{"url1"}},
+				{BlogID: "id5", AccountID: 3, Title: "title5", Summary: "summary5", Content: "content5", Tags: []string{"tag1"}, CreatedOn: getTime("2021-03-16T15:04:05Z"), Images: []string{"url1"}},
 			},
 			err: nil,
 		},
@@ -87,9 +90,9 @@ func TestBlog_GetByIDs(t *testing.T) {
 			description: "get blogs with id = 5, 4, 1 (always returns in chronological order of creation)",
 			input:       []string{"id5", "id4", "id1"},
 			output: []*models.Blog{
-				{BlogID: "id1", AccountID: 5, Title: "title1", Summary: "summary1", Content: "content1", Tags: []string{"tag2"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 21}.String(), Images: []string{"url1"}},
-				{BlogID: "id4", AccountID: 2, Title: "title4", Summary: "summary4", Content: "content4", Tags: []string{"tag3", "tag2"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 15}.String(), Images: []string{"url1"}},
-				{BlogID: "id5", AccountID: 3, Title: "title5", Summary: "summary5", Content: "content5", Tags: []string{"tag1"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 16}.String(), Images: []string{"url1"}},
+				{BlogID: "id1", AccountID: 5, Title: "title1", Summary: "summary1", Content: "content1", Tags: []string{"tag2"}, CreatedOn: getTime("2021-03-21T15:04:05Z"), Images: []string{"url1"}},
+				{BlogID: "id4", AccountID: 2, Title: "title4", Summary: "summary4", Content: "content4", Tags: []string{"tag3", "tag2"}, CreatedOn: getTime("2021-03-15T15:04:05Z"), Images: []string{"url1"}},
+				{BlogID: "id5", AccountID: 3, Title: "title5", Summary: "summary5", Content: "content5", Tags: []string{"tag1"}, CreatedOn: getTime("2021-03-16T15:04:05Z"), Images: []string{"url1"}},
 			},
 			err: nil,
 		},
@@ -126,12 +129,12 @@ func TestBlog_Get(t *testing.T) {
 		{
 			description: "get blog with blog id = 5",
 			input:       &models.Blog{BlogID: "id5"},
-			output:      &models.Blog{BlogID: "id5", AccountID: 3, Title: "title5", Summary: "summary5", Content: "content5", Tags: []string{"tag1"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 16}.String(), Images: []string{"url1"}},
+			output:      &models.Blog{BlogID: "id5", AccountID: 3, Title: "title5", Summary: "summary5", Content: "content5", Tags: []string{"tag1"}, CreatedOn: getTime("2021-03-16T15:04:05Z"), Images: []string{"url1"}},
 		},
 		{
 			description: "get blog with account id = 5",
 			input:       &models.Blog{AccountID: 5},
-			output:      &models.Blog{BlogID: "id1", AccountID: 5, Title: "title1", Summary: "summary1", Content: "content1", Tags: []string{"tag2"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 21}.String(), Images: []string{"url1"}},
+			output:      &models.Blog{BlogID: "id1", AccountID: 5, Title: "title1", Summary: "summary1", Content: "content1", Tags: []string{"tag2"}, CreatedOn: getTime("2021-03-21T15:04:05Z"), Images: []string{"url1"}},
 		},
 	}
 
@@ -147,7 +150,7 @@ func TestBlog_Get(t *testing.T) {
 func TestBlog_Create(t *testing.T) {
 	ctx, blog := initializeTest()
 
-	model := &models.Blog{BlogID: "TEST_ID", AccountID: 5, Title: "title", Summary: "summary", Content: "content", Tags: []string{"tag1"}, CreatedOn: types.Date{}.Today().String(), Images: []string{"url8"}}
+	model := &models.Blog{BlogID: "TEST_ID", AccountID: 5, Title: "title", Summary: "summary", Content: "content", Tags: []string{"tag1"}, CreatedOn: getTime("2020-09-21T15:04:05Z"), Images: []string{"url8"}}
 
 	tests := []struct {
 		description string
@@ -183,17 +186,17 @@ func TestBlog_Update(t *testing.T) {
 		{
 			description: "Valid Update on Title, Tags and Images.",
 			input:       &models.Blog{BlogID: "id1", Title: "new_title", Tags: []string{"tag1", "tag3"}, Images: []string{"url8"}},
-			output:      &models.Blog{BlogID: "id1", AccountID: 5, Title: "new_title", Summary: "summary1", Content: "content1", Tags: []string{"tag2", "tag1", "tag3"}, Images: []string{"url1", "url8"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 21}.String()},
+			output:      &models.Blog{BlogID: "id1", AccountID: 5, Title: "new_title", Summary: "summary1", Content: "content1", Tags: []string{"tag2", "tag1", "tag3"}, Images: []string{"url1", "url8"}, CreatedOn: getTime("2021-03-21T15:04:05Z")},
 		},
 		{
 			description: "Valid Update on Content.",
 			input:       &models.Blog{BlogID: "id2", Content: "new_content"},
-			output:      &models.Blog{BlogID: "id2", AccountID: 5, Title: "title2", Summary: "summary2", Content: "new_content", Tags: []string{"tag1", "tag2"}, Images: []string{"url1", "url2"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 20}.String()},
+			output:      &models.Blog{BlogID: "id2", AccountID: 5, Title: "title2", Summary: "summary2", Content: "new_content", Tags: []string{"tag1", "tag2"}, Images: []string{"url1", "url2"}, CreatedOn: getTime("2021-03-20T15:04:05Z")},
 		},
 		{
 			description: "Valid Update on Summary.",
 			input:       &models.Blog{BlogID: "id2", Summary: "new_summary"},
-			output:      &models.Blog{BlogID: "id2", AccountID: 5, Title: "title2", Summary: "new_summary", Content: "new_content", Tags: []string{"tag1", "tag2"}, Images: []string{"url1", "url2"}, CreatedOn: types.Date{Year: 2021, Month: 3, Day: 20}.String()},
+			output:      &models.Blog{BlogID: "id2", AccountID: 5, Title: "title2", Summary: "new_summary", Content: "new_content", Tags: []string{"tag1", "tag2"}, Images: []string{"url1", "url2"}, CreatedOn: getTime("2021-03-20T15:04:05Z")},
 		},
 	}
 
