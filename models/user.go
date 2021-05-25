@@ -6,19 +6,19 @@ import (
 )
 
 type User struct {
-	ID       int64          `json:"-"`                  // Unique User ID
-	UserName string         `json:"user_name"`          // Username
-	FName    string         `json:"f_name"`             // First Name
-	LName    string         `json:"l_name"`             // Last Name
-	Email    sql.NullString `json:"email,omitempty"`    // Email
-	PhoneNo  sql.NullString `json:"phone_no,omitempty"` // Phone Number
-	Password string         `json:"password,omitempty"` // Password
+	ID       int64          // Unique User ID
+	UserName string         // Username
+	FName    string         // First Name
+	LName    string         // Last Name
+	Email    sql.NullString // Email
+	PhoneNo  sql.NullString // Phone Number
+	Password string         // Password
 }
 
 func (u User) String() string {
 	if u.ID != 0 {
-		return fmt.Sprintf("User: %v %v, (Username: %v and ID: %v)", u.FName, u.LName, u.UserName, u.ID)
+		return fmt.Sprintf("USER %v %v, (USERNAME %v and ID %v)", u.FName, u.LName, u.UserName, u.ID)
 	}
 
-	return fmt.Sprintf("User: %v %v, (Username: %v)", u.FName, u.LName, u.UserName)
+	return fmt.Sprintf("USER %v %v, (USERNAME %v)", u.FName, u.LName, u.UserName)
 }

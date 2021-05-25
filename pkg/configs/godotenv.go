@@ -1,18 +1,19 @@
 package configs
 
 import (
-	"fmt"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 	"os"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 
 	"github.com/joho/godotenv"
 )
 
-type ConfigLoader struct {
+type config struct {
+	log          log.Logger
+	confLocation string
 }
 
-func NewConfigLoader(confLocation string) (ConfigLoader, error) {
+func NewConfigLoader(confLocation string) config {
 	log := log.NewLogger()
 
 	defaultFile := confLocation + "/.env"
@@ -21,6 +22,7 @@ func NewConfigLoader(confLocation string) (ConfigLoader, error) {
 	if env == "" {
 		env = "local"
 	}
+
 	overrideFile := confLocation + "/." + env + ".env"
 
 	err1 := godotenv.Load(overrideFile)
@@ -35,17 +37,16 @@ func NewConfigLoader(confLocation string) (ConfigLoader, error) {
 
 	if err1 != nil && err2 != nil {
 		log.Fatalf("cannot load configs from folder: %s", confLocation)
-		return ConfigLoader{}, errors.Error{Message: fmt.Sprintf("cannot load configs from folder: %s", confLocation)}
 	}
 
-	return ConfigLoader{}, nil
+	return config{log: log, confLocation: confLocation}
 }
 
-func (c ConfigLoader) Get(key string) string {
+func (c config) Get(key string) string {
 	return os.Getenv(key)
 }
 
-func (c ConfigLoader) GetOrDefault(key, defaultVal string) string {
+func (c config) GetOrDefault(key, defaultVal string) string {
 	val := os.Getenv(key)
 	if val != "" {
 		return val

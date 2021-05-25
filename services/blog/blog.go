@@ -1,36 +1,46 @@
 package blog
 
 import (
-	"context"
+	"fmt"
+	"mime/multipart"
+	"path/filepath"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
+	"github.com/google/uuid"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/types"
-	"github.com/Aakanksha-jais/picshot-golang-backend/services"
 	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 )
 
 type blog struct {
-	blogStore stores.Blog
-	tagStore  stores.Tag
-	logger    log.Logger
+	blogStore  stores.Blog
+	tagStore   stores.Tag
+	imageStore stores.Image
 }
 
-func New(blogStore stores.Blog, tagStore stores.Tag, logger log.Logger) services.Blog {
+func New(blogStore stores.Blog, tagStore stores.Tag, imageStore stores.Image) blog {
 	return blog{
-		blogStore: blogStore,
-		tagStore:  tagStore,
-		logger:    logger,
+		blogStore:  blogStore,
+		tagStore:   tagStore,
+		imageStore: imageStore,
 	}
 }
 
 // GetAll is used to retrieve all blogs that match the filter.
-func (b blog) GetAll(ctx context.Context, filter models.Blog) ([]*models.Blog, error) {
+func (b blog) GetAll(ctx *app.Context, filter *models.Blog) ([]*models.Blog, error) {
+	if filter == nil {
+		filter = &models.Blog{}
+	}
+
 	return b.blogStore.GetAll(ctx, filter)
 }
 
 // GetAllByTagName retrieves all blogs by tag name.
-func (b blog) GetAllByTagName(ctx context.Context, name string) ([]*models.Blog, error) {
+func (b blog) GetAllByTagName(ctx *app.Context, name string) ([]*models.Blog, error) {
 	tag, err := b.tagStore.GetByName(ctx, name)
 	if err != nil {
 		return nil, err
@@ -40,42 +50,70 @@ func (b blog) GetAllByTagName(ctx context.Context, name string) ([]*models.Blog,
 }
 
 // GetByID is used to retrieve a single blog by its id.
-func (b blog) GetByID(ctx context.Context, id string) (*models.Blog, error) {
+func (b blog) GetByID(ctx *app.Context, id string) (*models.Blog, error) {
 	if id == "" {
 		return nil, errors.MissingParam{Param: "blog_id"}
 	}
 
-	return b.blogStore.Get(ctx, models.Blog{BlogID: id})
+	blog, err := b.blogStore.Get(ctx, &models.Blog{BlogID: id})
+	if blog == nil {
+		return nil, errors.EntityNotFound{Entity: "blog", ID: id}
+	}
+
+	return blog, err
 }
 
 // Create is used to create a Blog.
 // Missing params check for fields should be done on the frontend as well.
-func (b blog) Create(ctx context.Context, model models.Blog) (*models.Blog, error) {
-	id := model.BlogID
+func (b blog) Create(ctx *app.Context, model *models.Blog, images []*multipart.FileHeader) (*models.Blog, error) {
+	id := ctx.Value(auth.JWTContextKey("user_id"))
+	model.AccountID = id.(int64)
 
-	model.BlogID = "" // blog_id is automatically assigned and should remain empty before creation of blog
+	model.BlogID = generateNewID()
 
-	err := checkMissingParams(model)
+	err := checkMissingParams(*model)
 	if err != nil {
 		return nil, err
 	}
 
 	model.CreatedOn = types.Date{}.Today().String()
 
-	// todo: store images to cloud and add image urls to model
+	ctx.Logger.Debugf("images to be uploaded: %v", len(images))
+
+	for _, img := range images { //todo concurrently
+		name := fmt.Sprintf("%v_%v%v", model.AccountID, generateNewID(), filepath.Ext(img.Filename))
+
+		err := b.imageStore.Upload(ctx, img, name)
+		if err != nil {
+			return nil, err
+		}
+
+		model.Images = append(model.Images, fmt.Sprintf("https://%v.s3.ap-south-1.amazonaws.com/%s", ctx.Config.Get("AWS_BUCKET"), name))
+	}
 
 	res, err := b.blogStore.Create(ctx, model)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = b.tagStore.AddBlogID(ctx, id, model.Tags)
+	_, err = b.tagStore.AddBlogID(ctx, res.BlogID, model.Tags)
 	if err != nil {
 		// tag store errors are not critical, so need not be returned to the delivery layer.
-		b.logger.Errorf("Cannot add Blog ID %s to tags %v", id, model.Tags)
+		ctx.Logger.Errorf("cannot add blog id %s to tags %v", res.BlogID, model.Tags)
 	}
 
 	return res, nil
+}
+
+func generateNewID() string {
+	var space uuid.UUID
+
+	space, err := uuid.NewDCEGroup()
+	if err != nil {
+		space, _ = uuid.NewDCEPerson()
+	}
+
+	return uuid.NewMD5(space, nil).String()
 }
 
 func checkMissingParams(model models.Blog) error {
@@ -100,14 +138,14 @@ func checkMissingParams(model models.Blog) error {
 // Update updates a blog based on its id.
 // Parameters that are meant to be updated are populated, else left empty.
 // Images can only be added, not deleted.
-func (b blog) Update(ctx context.Context, model models.Blog) (*models.Blog, error) {
+func (b blog) Update(ctx *app.Context, model *models.Blog) (*models.Blog, error) {
 	id := model.BlogID
 
 	if id == "" {
 		return nil, errors.MissingParam{Param: "blog_id"}
 	}
 
-	blog, err := b.blogStore.Get(ctx, models.Blog{BlogID: id})
+	blog, err := b.blogStore.Get(ctx, &models.Blog{BlogID: id})
 	if err != nil {
 		return nil, errors.EntityNotFound{Entity: "blog", ID: id}
 	}
@@ -124,25 +162,25 @@ func (b blog) Update(ctx context.Context, model models.Blog) (*models.Blog, erro
 	_, err = b.tagStore.RemoveBlogID(ctx, model.BlogID, blog.Tags)
 	if err != nil {
 		// tag store errors are not critical, so need not be returned to the delivery layer.
-		b.logger.Errorf("Cannot remove Blog ID %s from tags %v", id, model.Tags)
+		ctx.Logger.Errorf("Cannot remove Blog ID %s from tags %v", id, model.Tags)
 	}
 
 	_, err = b.tagStore.AddBlogID(ctx, model.BlogID, model.Tags)
 	if err != nil {
 		// tag store errors are not critical, so need not be returned to the delivery layer.
-		b.logger.Errorf("Cannot add Blog ID %s to tags %v", id, model.Tags)
+		ctx.Logger.Errorf("Cannot add Blog ID %s to tags %v", id, model.Tags)
 	}
 
 	return res, nil
 }
 
 // Delete deletes a blog based on its id.
-func (b blog) Delete(ctx context.Context, id string) error {
+func (b blog) Delete(ctx *app.Context, id string) error {
 	if id == "" {
 		return errors.MissingParam{Param: "blog_id"}
 	}
 
-	blog, err := b.blogStore.Get(ctx, models.Blog{BlogID: id})
+	blog, err := b.blogStore.Get(ctx, &models.Blog{BlogID: id})
 	if err != nil {
 		return errors.EntityNotFound{Entity: "blog", ID: id}
 	}
@@ -155,7 +193,7 @@ func (b blog) Delete(ctx context.Context, id string) error {
 	_, err = b.tagStore.RemoveBlogID(ctx, id, blog.Tags)
 	if err != nil {
 		// tag store errors are not critical, so need not be returned to the delivery layer.
-		b.logger.Errorf("Cannot remove Blog ID %s from tags %v", id, blog.Tags)
+		ctx.Logger.Errorf("Cannot remove Blog ID %s from tags %v", id, blog.Tags)
 	}
 
 	return nil

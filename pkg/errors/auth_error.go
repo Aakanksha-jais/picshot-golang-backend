@@ -14,5 +14,5 @@ func (e AuthError) Error() string {
 		return e.Message
 	}
 
-	return fmt.Sprintf("%v; %s", e.Err, e.Message)
+	return fmt.Sprintf("%v: %s", e.Err, e.Message)
 }

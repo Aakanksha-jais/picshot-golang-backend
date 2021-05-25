@@ -2,20 +2,17 @@ package middlewares
 
 import (
 	"context"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/response"
 	"net/http"
 	"strings"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 )
 
-func Authentication(config configs.ConfigLoader, logger log.Logger) func(inner http.Handler) http.Handler {
+func Authentication(logger log.Logger) func(inner http.Handler) http.Handler {
 	return func(inner http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			logger.Debugf("request on endpoint: %s", r.URL.String())
-			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 			if exemptPath(r) {
 				inner.ServeHTTP(w, r)
@@ -24,25 +21,25 @@ func Authentication(config configs.ConfigLoader, logger log.Logger) func(inner h
 
 			authHeader := strings.Split(r.Header.Get("Authorization"), " ")
 			if len(authHeader) != 2 {
-				logger.Errorf("invalid auth-header: %v", authHeader)
-				response.WriteResponse(w, errors.AuthError{Message: "cannot fetch auth-token; invalid auth-header"}, nil, logger)
+				logger.Errorf("cannot fetch auth-token (invalid auth-header): %v", authHeader)
+				w.WriteHeader(http.StatusUnauthorized)
 
 				return
 			}
 
 			jwtToken := authHeader[1]
 
-			claim, err := auth.ParseToken(config, jwtToken)
+			claim, err := auth.ParseToken(jwtToken)
 			if err != nil {
 				logger.Error(err)
-				response.SetHeader(w, err, nil, logger)
+				w.WriteHeader(http.StatusUnauthorized)
 
 				return
 			}
 
 			jwtIDKey := auth.JWTContextKey("user_id")
 			r = r.WithContext(context.WithValue(r.Context(), jwtIDKey, claim.UserID))
-			logger.Infof("user_id: %v authorised.", r.Context().Value(jwtIDKey))
+			logger.Debugf("user_id: %v authorised to make request on %v.", r.Context().Value(jwtIDKey), r.URL.Path)
 
 			inner.ServeHTTP(w, r)
 		})

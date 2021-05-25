@@ -1,42 +1,45 @@
 package account
 
 import (
-	"context"
+	"database/sql"
+	"reflect"
+	"time"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 	"github.com/Aakanksha-jais/picshot-golang-backend/services"
 	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 	"golang.org/x/crypto/bcrypt"
-	"regexp"
 )
 
 type account struct {
 	accountStore stores.Account
 	blogService  services.Blog
-	logger       log.Logger
 }
 
-func New(accountStore stores.Account, blogService services.Blog, logger log.Logger) services.Account {
+func New(accountStore stores.Account, blogService services.Blog) services.Account {
 	return account{
 		accountStore: accountStore,
 		blogService:  blogService,
-		logger:       logger,
 	}
 }
 
 // GetAll gets all accounts that match the filter.
-func (a account) GetAll(ctx context.Context, filter *models.Account) ([]*models.Account, error) {
+func (a account) GetAll(ctx *app.Context, filter *models.Account) ([]*models.Account, error) {
 	return a.accountStore.GetAll(ctx, filter)
 }
 
-func (a account) GetByID(ctx context.Context, id int64) (*models.Account, error) {
+func (a account) GetByID(ctx *app.Context, id int64) (*models.Account, error) {
 	account, err := a.accountStore.Get(ctx, &models.Account{User: models.User{ID: id}})
 	if err != nil {
 		return nil, err
 	}
 
-	if account == nil {
+	if account == nil || reflect.DeepEqual(account, &models.Account{}) {
 		return nil, errors.EntityNotFound{Entity: "user"}
 	}
 
@@ -46,7 +49,7 @@ func (a account) GetByID(ctx context.Context, id int64) (*models.Account, error)
 }
 
 // GetAccountWithBlogs fetches an account with all the blogs posted by the account.
-func (a account) GetAccountWithBlogs(ctx context.Context, username string) (*models.Account, error) {
+func (a account) GetAccountWithBlogs(ctx *app.Context, username string) (*models.Account, error) {
 	err := validateUsername(username)
 	if err != nil {
 		return nil, err
@@ -61,7 +64,7 @@ func (a account) GetAccountWithBlogs(ctx context.Context, username string) (*mod
 		return nil, errors.EntityNotFound{Entity: "user"}
 	}
 
-	blogs, err := a.blogService.GetAll(ctx, models.Blog{AccountID: account.ID})
+	blogs, err := a.blogService.GetAll(ctx, &models.Blog{AccountID: account.ID})
 
 	for i := range blogs {
 		if blogs[i] != nil {
@@ -69,13 +72,90 @@ func (a account) GetAccountWithBlogs(ctx context.Context, username string) (*mod
 		}
 	}
 
-	account.Password = ""
-
 	return account, nil
 }
 
-// Update updates account information based on account_id.
-func (a account) Update(ctx context.Context, model *models.Account) (*models.Account, error) {
+func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Account, error) {
+	if user == nil {
+		return nil, errors.MissingParam{Param: "user details"}
+	}
+
+	update := &models.Account{}
+
+	id := ctx.Value(auth.JWTContextKey("user_id"))
+
+	account, err := a.GetByID(ctx, id.(int64))
+	if err != nil {
+		return nil, err
+	}
+
+	if account.UserName != user.UserName {
+		err = validateUsername(user.UserName)
+		if err != nil {
+			return nil, err
+		}
+
+		err = a.CheckAvailability(ctx, &models.User{UserName: user.UserName})
+		if err != nil {
+			return nil, err
+		}
+
+		update.UserName = account.UserName
+	}
+
+	if account.FName != user.FName {
+		err = validateName(user.FName)
+		if err != nil {
+			return nil, err
+		}
+
+		update.FName = account.FName
+	}
+
+	if account.LName != user.LName {
+		err = validateName(user.LName)
+		if err != nil {
+			return nil, err
+		}
+
+		update.LName = account.LName
+	}
+
+	if account.Email.String != user.Email.String {
+		err = validateEmail(user.Email.String)
+		if err != nil {
+			return nil, err
+		}
+
+		err = a.CheckAvailability(ctx, &models.User{Email: user.Email})
+		if err != nil {
+			return nil, err
+		}
+
+		update.Email = account.Email
+	}
+
+	if account.PhoneNo.String != user.PhoneNo.String {
+		err = validatePhone(user.PhoneNo.String)
+		if err != nil {
+			return nil, err
+		}
+
+		err = a.CheckAvailability(ctx, &models.User{PhoneNo: user.PhoneNo})
+		if err != nil {
+			return nil, err
+		}
+
+		update.PhoneNo = account.PhoneNo
+	}
+
+	update.ID = id.(int64)
+
+	return a.accountStore.Update(ctx, update)
+}
+
+// Update updates account information based on account_id.todo
+func (a account) Update(ctx *app.Context, model *models.Account) (*models.Account, error) {
 	if model.ID == 0 {
 		return nil, errors.MissingParam{Param: "user_id"}
 	}
@@ -83,14 +163,42 @@ func (a account) Update(ctx context.Context, model *models.Account) (*models.Acc
 	return a.accountStore.Update(ctx, model)
 }
 
+func (a account) UpdatePassword(ctx *app.Context, oldPassword, newPassword string) error {
+	id := ctx.Value(auth.JWTContextKey("user_id"))
+
+	account, err := a.accountStore.Get(ctx, &models.Account{User: models.User{ID: id.(int64)}})
+	if err != nil {
+		return err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(oldPassword))
+	if err != nil {
+		return errors.AuthError{Err: err, Message: "invalid password"}
+	}
+
+	err = validatePassword(newPassword)
+	if err != nil {
+		return err
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.Error{Err: err, Message: "error in hashing password", Type: "password-hash-error"}
+	}
+
+	_, err = a.accountStore.Update(ctx, &models.Account{User: models.User{ID: id.(int64), Password: string(hash)}, PwdUpdate: &sql.NullTime{Time: time.Now(), Valid: true}})
+
+	return err
+}
+
 // Delete deactivates an account and updates it's deletion request.
 // After 30 days, the account gets deleted if the status remains inactive.
-func (a account) Delete(ctx context.Context, id int64) error {
+func (a account) Delete(ctx *app.Context, id int64) error {
 	return a.accountStore.Delete(ctx, id)
 }
 
 // Create creates an account and assigns an id to it.
-func (a account) Create(ctx context.Context, user *models.User) (*models.Account, error) {
+func (a account) Create(ctx *app.Context, user *models.User) (*models.Account, error) {
 	if user == nil {
 		return nil, errors.MissingParam{Param: "user details"}
 	}
@@ -120,59 +228,41 @@ func (a account) Create(ctx context.Context, user *models.User) (*models.Account
 }
 
 // CheckAvailability checks if user name exists in the database.
-func (a account) CheckAvailability(ctx context.Context, user models.User) error {
+func (a account) CheckAvailability(ctx *app.Context, user *models.User) error {
+	if empty(user) {
+		return errors.MissingParam{Param: "signup_id"}
+	}
+
 	if user.UserName == "" {
 		if user.Email.String == "" {
-			if user.PhoneNo.String == "" {
-				return errors.MissingParam{Param: "username (or) email (or) phone"}
-			}
-
 			if err := validatePhone(user.PhoneNo.String); err != nil {
 				return err
 			}
 
-			acc, _ := a.accountStore.Get(ctx, &models.Account{User: models.User{PhoneNo: user.PhoneNo}})
-			if acc != nil {
-				return errors.EntityAlreadyExists{Entity: "user", ValueType: "phone_no", Value: user.PhoneNo.String}
-			}
-
-			a.logger.Debugf("phone number %s available", user.PhoneNo.String)
-			return nil
+			return a.checkPhoneAvailability(ctx, user.PhoneNo.String)
 		}
 
 		if err := validateEmail(user.Email.String); err != nil {
 			return err
 		}
 
-		acc, _ := a.accountStore.Get(ctx, &models.Account{User: models.User{Email: user.Email}})
-		if acc != nil {
-			return errors.EntityAlreadyExists{Entity: "user", ValueType: "email", Value: user.Email.String}
-		}
-
-		a.logger.Debugf("email %s available", user.Email.String)
-		return nil
+		return a.checkEmailAvailability(ctx, user.Email.String)
 	}
 
 	if err := validateUsername(user.UserName); err != nil {
 		return err
 	}
 
-	acc, _ := a.accountStore.Get(ctx, &models.Account{User: models.User{UserName: user.UserName}})
-	if acc != nil {
-		return errors.EntityAlreadyExists{Entity: "user", ValueType: "username", Value: user.UserName}
-	}
-
-	a.logger.Debugf("username %s available", user.UserName)
-	return nil
+	return a.checkUsernameAvailability(ctx, user.UserName)
 }
 
 // Login gets an account by the User Details filter.
-func (a account) Login(ctx context.Context, user *models.User) (*models.Account, error) {
+func (a account) Login(ctx *app.Context, user *models.User) (*models.Account, error) {
 	if user == nil {
 		return nil, errors.MissingParam{Param: "user details"}
 	}
 
-	if user.UserName == "" && user.Email.String == "" && user.PhoneNo.String == "" {
+	if empty(user) {
 		return nil, errors.MissingParam{Param: "login_id"}
 	}
 
@@ -210,114 +300,4 @@ func (a account) Login(ctx context.Context, user *models.User) (*models.Account,
 	}
 
 	return account, nil
-}
-
-func (a account) checkUserExists(ctx context.Context, user *models.User) error {
-	acc, _ := a.accountStore.Get(ctx, &models.Account{User: models.User{UserName: user.UserName}})
-	if acc != nil {
-		return errors.EntityAlreadyExists{Entity: "user", ValueType: "username", Value: user.UserName}
-	}
-
-	acc, _ = a.accountStore.Get(ctx, &models.Account{User: models.User{Email: user.Email}})
-	if acc != nil {
-		return errors.EntityAlreadyExists{Entity: "user", ValueType: "email", Value: user.Email.String}
-	}
-
-	acc, _ = a.accountStore.Get(ctx, &models.Account{User: models.User{PhoneNo: user.PhoneNo}})
-	if acc != nil {
-		return errors.EntityAlreadyExists{Entity: "user", ValueType: "phone number", Value: user.PhoneNo.String}
-	}
-
-	return nil
-}
-
-func validateDetails(user *models.User) error {
-	if user.UserName == "" {
-		return errors.MissingParam{Param: "user_name"}
-	}
-
-	if err := validateUsername(user.UserName); err != nil {
-		return err
-	}
-
-	if user.Email.String == "" && user.PhoneNo.String == "" {
-		return errors.MissingParam{Param: "email"}
-	}
-
-	if user.Email.String != "" {
-		if err := validateEmail(user.Email.String); err != nil {
-			return err
-		}
-	}
-
-	if user.PhoneNo.String != "" {
-		if err := validatePhone(user.PhoneNo.String); err != nil {
-			return err
-		}
-	}
-
-	if err := validatePassword(user.Password); err != nil {
-		return err
-	}
-
-	if user.FName == "" && user.LName == "" {
-		return errors.MissingParam{Param: "name"}
-	}
-
-	if err := validateName(user.FName); err != nil {
-		return err
-	}
-
-	err := validateName(user.LName)
-
-	return err
-}
-
-func validateName(name string) error {
-	// username should be aplha-numeric and should have at least 8 characters
-	res, err := regexp.MatchString("^[a-zA-Z]+$", name)
-	if err == nil && res {
-		return nil
-	}
-
-	return errors.InvalidParam{Param: "name"}
-}
-
-func validateUsername(username string) error {
-	// username should be aplha-numeric and should have at least 8 characters
-	res, err := regexp.MatchString(`^[0-9A-Za-z_]{8,}$`, username)
-	if err == nil && res {
-		return nil
-	}
-
-	return errors.InvalidParam{Param: "username"}
-}
-
-func validateEmail(email string) error {
-	res, err := regexp.MatchString(`^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+[.][a-zA-Z0-9-.]+$`, email)
-	if err == nil && res {
-		return nil
-	}
-
-	return errors.InvalidParam{Param: "email"}
-}
-
-func validatePhone(phone string) error {
-	res, err := regexp.MatchString(`^[0-9]+$`, phone)
-	if err == nil && res {
-		return nil
-	}
-
-	return errors.InvalidParam{Param: "phone_no"}
-}
-
-func validatePassword(password string) error {
-	// password between 8 to 20 characters
-	// alphanumeric and !@#$%^&* symbols allowed
-	res, err := regexp.MatchString(`^[a-zA-Z0-9!@#$%^&*]{8,20}$`, password)
-	if err == nil && res {
-		return nil
-	}
-
-	return errors.InvalidParam{Param: "password"}
 }
