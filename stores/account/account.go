@@ -28,13 +28,13 @@ const (
 )
 
 // GetAll retrieves all accounts that match the given filter.
-func (a account) GetAll(c *app.Context, filter *models.Account) ([]*models.Account, error) {
+func (a account) GetAll(ctx *app.Context, filter *models.Account) ([]*models.Account, error) {
 	where, qp := filter.WhereClause()
 	query := getAll + where
 
 	accounts := make([]*models.Account, 0)
 
-	rows, err := c.SQL.SQLDB().QueryContext(c, query, qp...)
+	rows, err := ctx.SQL.SQLDB().QueryContext(ctx, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -52,16 +52,16 @@ func (a account) GetAll(c *app.Context, filter *models.Account) ([]*models.Accou
 		accounts = append(accounts, &account)
 	}
 
-	c.Logger.Debugf("successful execution of 'GetAll' accounts in storage layer")
+	ctx.Logger.Debugf("successful execution of 'GetAll' accounts in storage layer")
 	return accounts, nil
 }
 
 // Get retrieves a single account that matches a given filter.
-func (a account) Get(c *app.Context, filter *models.Account) (*models.Account, error) {
+func (a account) Get(ctx *app.Context, filter *models.Account) (*models.Account, error) {
 	where, qp := filter.WhereClause()
 	query := get + where
 
-	rows, err := c.SQL.SQLDB().QueryContext(c, query, qp...)
+	rows, err := ctx.SQL.SQLDB().QueryContext(ctx, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -85,8 +85,8 @@ func (a account) Get(c *app.Context, filter *models.Account) (*models.Account, e
 }
 
 // Create creates an account.
-func (a account) Create(c *app.Context, model *models.Account) (*models.Account, error) {
-	res, err := c.SQL.SQLDB().ExecContext(c, insert, model.UserName, model.Password, model.Email, model.FName, model.LName, model.PhoneNo, model.Status)
+func (a account) Create(ctx *app.Context, model *models.Account) (*models.Account, error) {
+	res, err := ctx.SQL.SQLDB().ExecContext(ctx, insert, model.UserName, model.Password, model.Email, model.FName, model.LName, model.PhoneNo, model.Status)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -96,7 +96,7 @@ func (a account) Create(c *app.Context, model *models.Account) (*models.Account,
 		return nil, errors.DBError{Err: err}
 	}
 
-	account, err := a.Get(c, &models.Account{User: models.User{ID: id}})
+	account, err := a.Get(ctx, &models.Account{User: models.User{ID: id}})
 	if err != nil {
 		return nil, err
 	}
@@ -105,14 +105,14 @@ func (a account) Create(c *app.Context, model *models.Account) (*models.Account,
 }
 
 // Update updates an account.
-func (a account) Update(c *app.Context, model *models.Account) (*models.Account, error) {
+func (a account) Update(ctx *app.Context, model *models.Account) (*models.Account, error) {
 	query, qp := generateSetClause(model)
 	query = fmt.Sprintf("%s WHERE id = ?;", query)
 	qp = append(qp, int(model.ID))
 
-	c.Logger.Debugf("query executed: %s with params %v", query, qp)
+	ctx.Logger.Debugf("query executed: %s with params %v", query, qp)
 
-	res, err := c.SQL.SQLDB().ExecContext(c, query, qp...)
+	res, err := ctx.SQL.SQLDB().ExecContext(ctx, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -122,7 +122,7 @@ func (a account) Update(c *app.Context, model *models.Account) (*models.Account,
 		return nil, errors.DBError{Err: err}
 	}
 
-	return a.Get(c, &models.Account{User: models.User{ID: id}})
+	return a.Get(ctx, &models.Account{User: models.User{ID: id}})
 }
 
 func generateSetClause(model *models.Account) (setClause string, qp []interface{}) {
@@ -184,8 +184,8 @@ func generateSetClause(model *models.Account) (setClause string, qp []interface{
 
 // Delete updates a delete request for an account and sets its status to inactive.
 // Account is then permanently deleted after 30 days of inactivity.
-func (a account) Delete(c *app.Context, id int64) error {
-	_, err := c.SQL.SQLDB().ExecContext(c, "UPDATE accounts SET del_req = ?, status = ? WHERE id = ?", time.Now(), "INACTIVE", id)
+func (a account) Delete(ctx *app.Context, id int64) error {
+	_, err := ctx.SQL.SQLDB().ExecContext(ctx, "UPDATE accounts SET del_req = ?, status = ? WHERE id = ?", time.Now(), "INACTIVE", id)
 	if err != nil {
 		return errors.DBError{Err: err}
 	}

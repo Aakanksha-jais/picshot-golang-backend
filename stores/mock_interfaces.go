@@ -5,6 +5,7 @@
 package stores
 
 import (
+	multipart "mime/multipart"
 	reflect "reflect"
 
 	models "github.com/Aakanksha-jais/picshot-golang-backend/models"
@@ -287,4 +288,41 @@ func (m *MockTag) RemoveBlogID(c *app.Context, blogID string, tags []string) ([]
 func (mr *MockTagMockRecorder) RemoveBlogID(c, blogID, tags interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveBlogID", reflect.TypeOf((*MockTag)(nil).RemoveBlogID), c, blogID, tags)
+}
+
+// MockImage is a mock of Image interface.
+type MockImage struct {
+	ctrl     *gomock.Controller
+	recorder *MockImageMockRecorder
+}
+
+// MockImageMockRecorder is the mock recorder for MockImage.
+type MockImageMockRecorder struct {
+	mock *MockImage
+}
+
+// NewMockImage creates a new mock instance.
+func NewMockImage(ctrl *gomock.Controller) *MockImage {
+	mock := &MockImage{ctrl: ctrl}
+	mock.recorder = &MockImageMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockImage) EXPECT() *MockImageMockRecorder {
+	return m.recorder
+}
+
+// Upload mocks base method.
+func (m *MockImage) Upload(c *app.Context, fileHeader *multipart.FileHeader, name string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Upload", c, fileHeader, name)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Upload indicates an expected call of Upload.
+func (mr *MockImageMockRecorder) Upload(c, fileHeader, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockImage)(nil).Upload), c, fileHeader, name)
 }
