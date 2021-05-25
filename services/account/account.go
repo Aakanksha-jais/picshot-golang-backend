@@ -149,19 +149,14 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 		update.PhoneNo = user.PhoneNo
 	}
 
-	if account.Status != "ACTIVE" {
-		update.Status = "ACTIVE"
-	}
-
 	update.ID = id.(int64)
 
 	return a.accountStore.Update(ctx, update)
 }
 
 // Update updates account information based on account_id.todo
-func (a account) Update(ctx *app.Context, model *models.Account) (*models.Account, error) {
-	id := ctx.Value(auth.JWTContextKey("user_id"))
-	model.ID = id.(int64)
+func (a account) Update(ctx *app.Context, model *models.Account, id int64) (*models.Account, error) {
+	model.ID = id
 
 	return a.accountStore.Update(ctx, model)
 }
@@ -196,8 +191,10 @@ func (a account) UpdatePassword(ctx *app.Context, oldPassword, newPassword strin
 
 // Delete deactivates an account and updates it's deletion request.
 // After 30 days, the account gets deleted if the status remains inactive.
-func (a account) Delete(ctx *app.Context, id int64) error {
-	return a.accountStore.Delete(ctx, id)
+func (a account) Delete(ctx *app.Context) error { // TODO: trigger a cronjob for 30 days deletion functionality
+	id := ctx.Value(auth.JWTContextKey("user_id"))
+
+	return a.accountStore.Delete(ctx, id.(int64))
 }
 
 // Create creates an account and assigns an id to it.
@@ -302,5 +299,5 @@ func (a account) Login(ctx *app.Context, user *models.User) (*models.Account, er
 		return nil, errors.AuthError{Err: err, Message: "invalid password"}
 	}
 
-	return account, nil
+	return a.Update(ctx, &models.Account{DelRequest: sql.NullTime{}, Status: "ACTIVE"}, account.ID)
 }

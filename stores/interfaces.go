@@ -64,4 +64,5 @@ type Tag interface {
 
 type Image interface {
 	Upload(c *app.Context, fileHeader *multipart.FileHeader, name string) error
+	DeleteBulk(ctx *app.Context, names []string) error
 }

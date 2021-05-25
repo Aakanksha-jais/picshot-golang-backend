@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"mime/multipart"
 	"path/filepath"
+	"strings"
 	"time"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/services"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
 
@@ -22,7 +25,7 @@ type blog struct {
 	imageStore stores.Image
 }
 
-func New(blogStore stores.Blog, tagStore stores.Tag, imageStore stores.Image) blog {
+func New(blogStore stores.Blog, tagStore stores.Tag, imageStore stores.Image) services.Blog {
 	return blog{
 		blogStore:  blogStore,
 		tagStore:   tagStore,
@@ -78,17 +81,25 @@ func (b blog) Create(ctx *app.Context, model *models.Blog, images []*multipart.F
 
 	model.CreatedOn = time.Now()
 
-	ctx.Logger.Debugf("images to be uploaded: %v", len(images))
+	ctx.Debugf("images to be uploaded: %v", len(images))
 
-	for _, img := range images { //todo concurrently
+	n := len(images)
+	errors := make(chan error, n)
+
+	for _, img := range images {
 		name := fmt.Sprintf("%v_%v%v", model.AccountID, generateNewID(), filepath.Ext(img.Filename))
 
-		err := b.imageStore.Upload(ctx, img, name)
-		if err != nil {
-			return nil, err
-		}
+		go func() {
+			errors <- b.imageStore.Upload(ctx, img, name)
+		}()
 
 		model.Images = append(model.Images, fmt.Sprintf("https://%v.s3.ap-south-1.amazonaws.com/%s", ctx.Config.Get("AWS_BUCKET"), name))
+	}
+
+	for i := 0; i < n; i++ {
+		if err := <-errors; err != nil {
+			return nil, err
+		}
 	}
 
 	res, err := b.blogStore.Create(ctx, model)
@@ -99,7 +110,7 @@ func (b blog) Create(ctx *app.Context, model *models.Blog, images []*multipart.F
 	_, err = b.tagStore.AddBlogID(ctx, res.BlogID, model.Tags)
 	if err != nil {
 		// tag store errors are not critical, so need not be returned to the delivery layer.
-		ctx.Logger.Errorf("cannot add blog id %s to tags %v", res.BlogID, model.Tags)
+		ctx.Errorf("cannot add blog id %s to tags %v", res.BlogID, model.Tags)
 	}
 
 	return res, nil
@@ -162,13 +173,13 @@ func (b blog) Update(ctx *app.Context, model *models.Blog) (*models.Blog, error)
 	_, err = b.tagStore.RemoveBlogID(ctx, model.BlogID, blog.Tags)
 	if err != nil {
 		// tag store errors are not critical, so need not be returned to the delivery layer.
-		ctx.Logger.Errorf("Cannot remove Blog ID %s from tags %v", id, model.Tags)
+		ctx.Errorf("Cannot remove Blog ID %s from tags %v", id, model.Tags)
 	}
 
 	_, err = b.tagStore.AddBlogID(ctx, model.BlogID, model.Tags)
 	if err != nil {
 		// tag store errors are not critical, so need not be returned to the delivery layer.
-		ctx.Logger.Errorf("Cannot add Blog ID %s to tags %v", id, model.Tags)
+		ctx.Errorf("Cannot add Blog ID %s to tags %v", id, model.Tags)
 	}
 
 	return res, nil
@@ -190,11 +201,29 @@ func (b blog) Delete(ctx *app.Context, id string) error {
 		return err
 	}
 
+	names := getNames(blog.Images)
+
+	err = b.imageStore.DeleteBulk(ctx, names)
+	if err != nil {
+		return err
+	}
+
 	_, err = b.tagStore.RemoveBlogID(ctx, id, blog.Tags)
 	if err != nil {
 		// tag store errors are not critical, so need not be returned to the delivery layer.
-		ctx.Logger.Errorf("Cannot remove Blog ID %s from tags %v", id, blog.Tags)
+		ctx.Errorf("cannot remove blog id %s from tags %v", id, blog.Tags)
 	}
 
 	return nil
+}
+
+func getNames(images []string) []string {
+	names := make([]string, 0)
+	for _, img := range images {
+		s := strings.Split(img, "/")
+		name := s[len(s)-1]
+
+		names = append(names, name)
+	}
+	return names
 }

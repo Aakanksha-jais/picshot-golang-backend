@@ -5,6 +5,8 @@ import (
 	"mime/multipart"
 	"net/http"
 
+	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
+
 	"github.com/aws/aws-sdk-go/aws/request"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
@@ -17,7 +19,7 @@ import (
 
 type image struct{}
 
-func New() image {
+func New() stores.Image {
 	return image{}
 }
 

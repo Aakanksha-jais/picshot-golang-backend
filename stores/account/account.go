@@ -1,7 +1,6 @@
 package account
 
 import (
-	"database/sql"
 	"fmt"
 	"reflect"
 	"strings"
@@ -52,7 +51,7 @@ func (a account) GetAll(ctx *app.Context, filter *models.Account) ([]*models.Acc
 		accounts = append(accounts, &account)
 	}
 
-	ctx.Logger.Debugf("successful execution of 'GetAll' accounts in storage layer")
+	ctx.Debugf("successful execution of 'GetAll' accounts in storage layer")
 	return accounts, nil
 }
 
@@ -113,9 +112,6 @@ func (a account) Update(ctx *app.Context, model *models.Account) (*models.Accoun
 	db := ctx.SQL.GetDB()
 
 	query, qp := generateSetClause(model)
-	if len(query) == 0 {
-		return nil, nil
-	}
 
 	query = fmt.Sprintf("%s WHERE id = ?;", query)
 	qp = append(qp, model.ID)
@@ -173,15 +169,10 @@ func generateSetClause(model *models.Account) (setClause string, qp []interface{
 		qp = append(qp, model.Status)
 	}
 
-	// todo update del req
-	if model.DelRequest.Valid {
-		setClause += " del_req = ?,"
-
-		qp = append(qp, sql.NullTime{})
-	}
+	setClause += " del_req = ?,"
+	qp = append(qp, model.DelRequest)
 
 	setClause = strings.TrimSuffix(setClause, ",")
-	setClause = strings.TrimSuffix(setClause, "UPDATE accounts SET")
 
 	return setClause, qp
 }
@@ -194,6 +185,5 @@ func (a account) Delete(ctx *app.Context, id int64) error {
 		return errors.DBError{Err: err}
 	}
 
-	// TODO: trigger a cronjob for 30 days deletion functionality
 	return nil
 }

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
+	picshot "github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
 
 	handlerAccount "github.com/Aakanksha-jais/picshot-golang-backend/handlers/account"
 	handlerBlog "github.com/Aakanksha-jais/picshot-golang-backend/handlers/blog"
@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	app := app.New()
+	app := picshot.New()
 
 	// Dependency Injection
 	blogStore := storeBlog.New()
@@ -31,17 +31,21 @@ func main() {
 	// Routes for Accounts
 	app.POST("/login", accountHandler.Login)
 	app.POST("/signup", accountHandler.Signup)
+	app.POST("/logout", accountHandler.Logout)
 	app.GET("/myaccount", accountHandler.Get)
 	app.PUT("/myaccount", accountHandler.Update)
 	app.GET("/user/{username}", accountHandler.GetUser)
 	app.GET("/available", accountHandler.CheckAvailability)
-	app.POST("/changepassword", accountHandler.UpdatePassword)
+	app.PUT("/password", accountHandler.UpdatePassword)
+	app.DELETE("/myaccount", accountHandler.Delete)
 
 	// Routes for Blogs
-	app.GET("/blogs", blogHandler.GetAll)
+	app.GET("/", blogHandler.GetAll)
+	app.GET("/browse", blogHandler.Browse)
 	app.POST("/blog", blogHandler.Create)
-	app.GET("/blogs/{blogid}", blogHandler.Get)
-	app.GET("/{accountid}/blogs", blogHandler.GetBlogsByUser)
+	app.GET("/blog/{blogid}", blogHandler.Get)
+	app.DELETE("/blog/{blogid}", blogHandler.Delete)
+	app.GET("/{accountid}/blog", blogHandler.GetBlogsByUser)
 
 	app.Start()
 }

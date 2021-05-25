@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Aakanksha-jais/picshot-golang-backend/handlers"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
@@ -15,7 +17,17 @@ type blog struct {
 	service services.Blog
 }
 
-func New(service services.Blog) blog {
+func (b blog) Browse(ctx *app.Context) (interface{}, error) {
+	panic("implement me")
+}
+
+func (b blog) Delete(ctx *app.Context) (interface{}, error) {
+	id := ctx.Request.PathParam("blogid")
+
+	return nil, b.service.Delete(ctx, id)
+}
+
+func New(service services.Blog) handlers.Blog {
 	return blog{
 		service: service,
 	}

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Aakanksha-jais/picshot-golang-backend/handlers"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
@@ -17,6 +19,10 @@ import (
 
 type account struct {
 	service services.Account
+}
+
+func New(service services.Account) handlers.Account {
+	return account{service: service}
 }
 
 func (a account) Login(ctx *app.Context) (interface{}, error) {
@@ -73,8 +79,11 @@ func (a account) Signup(ctx *app.Context) (interface{}, error) {
 	}, nil
 }
 
-func (a account) Logout(ctx *app.Context) (interface{}, error) {
-	return nil, nil
+func (a account) Logout(ctx *app.Context) (interface{}, error) { //todo invalidate the auth token
+	return func(w http.ResponseWriter) {
+		w.Header().Add("Authorization", fmt.Sprintf("Bearer %s", ""))
+		w.WriteHeader(http.StatusOK)
+	}, nil
 }
 
 func (a account) Get(ctx *app.Context) (interface{}, error) {
@@ -115,14 +124,19 @@ func (a account) UpdatePassword(ctx *app.Context) (interface{}, error) {
 	return nil, a.service.UpdatePassword(ctx, pwd.Old, pwd.New)
 }
 
+func (a account) Delete(ctx *app.Context) (interface{}, error) {
+	err := a.service.Delete(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.Logout(ctx)
+}
+
 func (a account) CheckAvailability(ctx *app.Context) (interface{}, error) {
 	username := ctx.Request.QueryParam("username")
 	email := ctx.Request.QueryParam("email")
 	phone := ctx.Request.QueryParam("phone")
 
 	return nil, a.service.CheckAvailability(ctx, &models.User{UserName: username, PhoneNo: sql.NullString{String: phone, Valid: true}, Email: sql.NullString{String: email, Valid: true}})
-}
-
-func New(service services.Account) account {
-	return account{service: service}
 }

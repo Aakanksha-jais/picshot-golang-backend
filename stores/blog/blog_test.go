@@ -9,17 +9,16 @@ import (
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/test"
 	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 )
 
 func initializeTest() (*app.Context, stores.Blog) {
-	test.InitializeTestDB(a.Mongo.DB(), a.Logger)
+	app.InitializeTestBlogCollection(a.Mongo.DB(), a.Logger, "../../db")
 	return &app.Context{Context: context.TODO(), App: a}, New()
 }
 
-func getTime(date string)time.Time{
-	t,_:=time.Parse("2006-01-02T15:04:05Z07:00", date)
+func getTime(date string) time.Time {
+	t, _ := time.Parse("2006-01-02T15:04:05Z07:00", date)
 	return t
 }
 
