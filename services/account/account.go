@@ -100,7 +100,7 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 			return nil, err
 		}
 
-		update.UserName = account.UserName
+		update.UserName = user.UserName
 	}
 
 	if account.FName != user.FName {
@@ -109,7 +109,7 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 			return nil, err
 		}
 
-		update.FName = account.FName
+		update.FName = user.FName
 	}
 
 	if account.LName != user.LName {
@@ -118,7 +118,7 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 			return nil, err
 		}
 
-		update.LName = account.LName
+		update.LName = user.LName
 	}
 
 	if account.Email.String != user.Email.String {
@@ -132,7 +132,7 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 			return nil, err
 		}
 
-		update.Email = account.Email
+		update.Email = user.Email
 	}
 
 	if account.PhoneNo.String != user.PhoneNo.String {
@@ -146,7 +146,11 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 			return nil, err
 		}
 
-		update.PhoneNo = account.PhoneNo
+		update.PhoneNo = user.PhoneNo
+	}
+
+	if account.Status != "ACTIVE" {
+		update.Status = "ACTIVE"
 	}
 
 	update.ID = id.(int64)
@@ -156,9 +160,8 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 
 // Update updates account information based on account_id.todo
 func (a account) Update(ctx *app.Context, model *models.Account) (*models.Account, error) {
-	if model.ID == 0 {
-		return nil, errors.MissingParam{Param: "user_id"}
-	}
+	id := ctx.Value(auth.JWTContextKey("user_id"))
+	model.ID = id.(int64)
 
 	return a.accountStore.Update(ctx, model)
 }

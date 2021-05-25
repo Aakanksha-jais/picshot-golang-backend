@@ -30,7 +30,7 @@ func New() *App {
 	// initialize server
 	app.server = NewServer(app)
 
-	InitializeDB(app.Mongo.DB(), app.SQL.SQLDB(), app.Logger) // todo: Remove this (only for testing)
+	InitializeDB(app.Mongo.DB(), app.SQL.GetDB(), app.Logger) // todo: Remove this (only for testing)
 
 	return app
 }

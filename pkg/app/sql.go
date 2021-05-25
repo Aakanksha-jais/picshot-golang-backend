@@ -11,7 +11,7 @@ import (
 )
 
 type SQLClient interface {
-	SQLDB() *sql.DB
+	GetDB() *sql.DB
 }
 
 type sqlClient struct {
@@ -20,7 +20,7 @@ type sqlClient struct {
 	config *SQLConfig
 }
 
-func (s sqlClient) SQLDB() *sql.DB {
+func (s sqlClient) GetDB() *sql.DB {
 	return s.DB
 }
 
