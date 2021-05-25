@@ -33,8 +33,10 @@ func NewServer(app *App) *server {
 	}
 
 	if app.Config.GetOrDefault("ENABLE_AUTH", "YES") == "YES" {
-		app.Logger.Infof("authentication middleware enabled")
-		s.Router.Use(middlewares.Authentication(app.Logger))
+		app.Infof("authentication middleware enabled")
+		s.Router.Use(middlewares.Authentication(app))
+	} else {
+		app.Warnf("authentication middleware disabled, some endpoints will not run")
 	}
 
 	s.Router.Use(s.contextInjector())

@@ -1,7 +1,6 @@
 package account
 
 import (
-	"database/sql"
 	"fmt"
 	"reflect"
 	"strings"
@@ -34,7 +33,7 @@ func (a account) GetAll(ctx *app.Context, filter *models.Account) ([]*models.Acc
 
 	accounts := make([]*models.Account, 0)
 
-	rows, err := ctx.SQL.SQLDB().QueryContext(ctx, query, qp...)
+	rows, err := ctx.SQL.GetDB().QueryContext(ctx, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -52,16 +51,18 @@ func (a account) GetAll(ctx *app.Context, filter *models.Account) ([]*models.Acc
 		accounts = append(accounts, &account)
 	}
 
-	ctx.Logger.Debugf("successful execution of 'GetAll' accounts in storage layer")
+	ctx.Debugf("successful execution of 'GetAll' accounts in storage layer")
 	return accounts, nil
 }
 
 // Get retrieves a single account that matches a given filter.
 func (a account) Get(ctx *app.Context, filter *models.Account) (*models.Account, error) {
+	db := ctx.SQL.GetDB()
+
 	where, qp := filter.WhereClause()
 	query := get + where
 
-	rows, err := ctx.SQL.SQLDB().QueryContext(ctx, query, qp...)
+	rows, err := db.QueryContext(ctx, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -86,7 +87,9 @@ func (a account) Get(ctx *app.Context, filter *models.Account) (*models.Account,
 
 // Create creates an account.
 func (a account) Create(ctx *app.Context, model *models.Account) (*models.Account, error) {
-	res, err := ctx.SQL.SQLDB().ExecContext(ctx, insert, model.UserName, model.Password, model.Email, model.FName, model.LName, model.PhoneNo, model.Status)
+	db := ctx.SQL.GetDB()
+
+	res, err := db.ExecContext(ctx, insert, model.UserName, model.Password, model.Email, model.FName, model.LName, model.PhoneNo, model.Status)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -106,23 +109,19 @@ func (a account) Create(ctx *app.Context, model *models.Account) (*models.Accoun
 
 // Update updates an account.
 func (a account) Update(ctx *app.Context, model *models.Account) (*models.Account, error) {
+	db := ctx.SQL.GetDB()
+
 	query, qp := generateSetClause(model)
+
 	query = fmt.Sprintf("%s WHERE id = ?;", query)
-	qp = append(qp, int(model.ID))
+	qp = append(qp, model.ID)
 
-	ctx.Logger.Debugf("query executed: %s with params %v", query, qp)
-
-	res, err := ctx.SQL.SQLDB().ExecContext(ctx, query, qp...)
+	_, err := db.ExecContext(ctx, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
 
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, errors.DBError{Err: err}
-	}
-
-	return a.Get(ctx, &models.Account{User: models.User{ID: id}})
+	return a.Get(ctx, &models.Account{User: models.User{ID: model.ID}})
 }
 
 func generateSetClause(model *models.Account) (setClause string, qp []interface{}) {
@@ -140,7 +139,7 @@ func generateSetClause(model *models.Account) (setClause string, qp []interface{
 		qp = append(qp, model.Password, model.PwdUpdate)
 	}
 
-	if model.Email.String != "" {
+	if model.Email.Valid {
 		setClause += " email = ?,"
 
 		qp = append(qp, model.Email)
@@ -158,24 +157,20 @@ func generateSetClause(model *models.Account) (setClause string, qp []interface{
 		qp = append(qp, model.LName)
 	}
 
-	if model.PhoneNo.String != "" {
+	if model.PhoneNo.Valid {
 		setClause += " phone_no = ?,"
 
 		qp = append(qp, model.PhoneNo)
 	}
 
-	if model.Status != "ACTIVE" {
+	if model.Status != "" {
 		setClause += " status = ?,"
 
-		qp = append(qp, "ACTIVE")
+		qp = append(qp, model.Status)
 	}
 
-	// todo update del req
-	if model.DelRequest != nil && !model.DelRequest.Valid {
-		setClause += " del_req = ?,"
-
-		qp = append(qp, sql.NullTime{})
-	}
+	setClause += " del_req = ?,"
+	qp = append(qp, model.DelRequest)
 
 	setClause = strings.TrimSuffix(setClause, ",")
 
@@ -185,11 +180,10 @@ func generateSetClause(model *models.Account) (setClause string, qp []interface{
 // Delete updates a delete request for an account and sets its status to inactive.
 // Account is then permanently deleted after 30 days of inactivity.
 func (a account) Delete(ctx *app.Context, id int64) error {
-	_, err := ctx.SQL.SQLDB().ExecContext(ctx, "UPDATE accounts SET del_req = ?, status = ? WHERE id = ?", time.Now(), "INACTIVE", id)
+	_, err := ctx.SQL.GetDB().ExecContext(ctx, "UPDATE accounts SET del_req = ?, status = ? WHERE id = ?", time.Now(), "INACTIVE", id)
 	if err != nil {
 		return errors.DBError{Err: err}
 	}
 
-	// TODO: trigger a cronjob for 30 days deletion functionality
 	return nil
 }

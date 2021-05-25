@@ -27,11 +27,11 @@ type Account interface {
 	UpdatePassword(c *app.Context, oldPassword, newPassword string) error
 
 	// Update updates Account info based on user_id.
-	Update(c *app.Context, model *models.Account) (*models.Account, error)
+	Update(c *app.Context, model *models.Account, id int64) (*models.Account, error)
 
 	// Delete deactivates an account and updates it's deletion request.
 	// After 30 days, the account gets deleted if the status remains inactive.
-	Delete(c *app.Context, id int64) error
+	Delete(c *app.Context) error
 
 	// Login logs in a user to his account.
 	Login(c *app.Context, user *models.User) (*models.Account, error)

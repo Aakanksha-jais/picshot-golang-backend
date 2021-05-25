@@ -65,17 +65,17 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			},
 		}
 
-		ctx.Logger.Error(err)
+		ctx.Error(err)
 	}
 
 	response, err := json.Marshal(resp)
 	if err != nil {
-		ctx.Logger.Error(err)
+		ctx.Error(err)
 	}
 
 	_, err = w.Write(response)
 	if err != nil {
-		ctx.Logger.Error(err)
+		ctx.Error(err)
 	}
 }
 
@@ -188,11 +188,11 @@ func getAccountResponse(data interface{}) accountResp {
 		a.PhoneNo = &account.PhoneNo.String
 	}
 
-	if account.PwdUpdate != nil {
+	if account.PwdUpdate.Valid {
 		a.PwdUpdate = &account.PwdUpdate.Time
 	}
 
-	if account.DelRequest != nil {
+	if account.DelRequest.Valid {
 		a.DelRequest = &account.DelRequest.Time
 	}
 	return a

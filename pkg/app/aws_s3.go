@@ -10,15 +10,21 @@ import (
 
 type AWSS3 interface {
 	Service() *s3.S3
+	Session() *session.Session
 }
 
 type awsS3 struct {
 	*s3.S3
-	config *S3Config
+	session *session.Session
+	config  *S3Config
 }
 
 func (a awsS3) Service() *s3.S3 {
 	return a.S3
+}
+
+func (a awsS3) Session() *session.Session {
+	return a.session
 }
 
 type S3Config struct {
@@ -28,7 +34,7 @@ type S3Config struct {
 func GetNewS3(logger log.Logger, config configs.Config) (AWSS3, error) {
 	awsConfigs := &aws.Config{Region: aws.String(config.GetOrDefault("AWS_REGION", "ap-south-1")), Logger: logger}
 
-	if config.Get("LOG_LEVEL") == log.DEBUG.String() {
+	if config.Get("AWS_LOG_LEVEL") == log.DEBUG.String() {
 		awsConfigs.WithLogLevel(aws.LogDebug)
 	}
 
@@ -41,5 +47,5 @@ func GetNewS3(logger log.Logger, config configs.Config) (AWSS3, error) {
 
 	svc := s3.New(sess)
 
-	return awsS3{S3: svc}, nil
+	return awsS3{S3: svc, session: sess}, nil
 }

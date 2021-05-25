@@ -3,6 +3,7 @@ package app
 import (
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
@@ -27,10 +28,11 @@ func New() *App {
 
 	app.initializeStores(app.Config)
 
+	// For Testing
+	app.loadTestData()
+
 	// initialize server
 	app.server = NewServer(app)
-
-	InitializeDB(app.Mongo.DB(), app.SQL.SQLDB(), app.Logger) // todo: Remove this (only for testing)
 
 	return app
 }
@@ -99,14 +101,14 @@ func mongoRetry(config configs.Config, app *App) {
 	for i := 0; i < maxRetries; i++ {
 		time.Sleep(time.Duration(retryDuration) * time.Second)
 
-		app.Logger.Debug("retrying mongo connection")
+		app.Debug("retrying mongo connection")
 
 		var err error
 
-		app.Mongo, err = GetNewMongoDB(app.Logger, config)
+		app.Mongo, err = GetNewMongoDB(app, config)
 
 		if err == nil {
-			app.Logger.Info("mongo initialized successfully")
+			app.Info("mongo initialized successfully")
 
 			break
 		}
@@ -117,14 +119,14 @@ func sqlRetry(config configs.Config, app *App) {
 	for i := 0; i < maxRetries; i++ {
 		time.Sleep(time.Duration(retryDuration) * time.Second)
 
-		app.Logger.Debug("retrying sql connection")
+		app.Debug("retrying sql connection")
 
 		var err error
 
-		app.SQL, err = GetNewSQLClient(app.Logger, config)
+		app.SQL, err = GetNewSQLClient(app, config)
 
 		if err == nil {
-			app.Logger.Info("sql initialized successfully")
+			app.Info("sql initialized successfully")
 
 			break
 		}
@@ -135,16 +137,36 @@ func s3Retry(config configs.Config, app *App) {
 	for i := 0; i < maxRetries; i++ {
 		time.Sleep(time.Duration(retryDuration) * time.Second)
 
-		app.Logger.Debug("retrying s3 session creation")
+		app.Debug("retrying s3 session creation")
 
 		var err error
 
-		app.S3, err = GetNewS3(app.Logger, config)
+		app.S3, err = GetNewS3(app, config)
 
 		if err == nil {
-			app.Logger.Info("s3 session initialized successfully")
+			app.Info("s3 session initialized successfully")
 
 			break
 		}
 	}
+}
+
+func (a *App) loadTestData() {
+	if a.Get("LOAD_TEST_DATA") == "YES" {
+		if !strings.EqualFold(a.Get("ENV"), "test") {
+			a.Warnf("environment variable LOAD_TEST_DATA is set to YES: all existing data across all databases will be LOST")
+			a.Warnf("terminate within 5 seconds if this was not intended")
+
+			time.Sleep(5 * time.Second)
+
+			a.Warnf("test data is being loaded now")
+		}
+
+		AddTestData(a.Mongo.DB(), a.SQL.GetDB(), a.S3, a.Logger)
+
+		a.Infof("test data has been loaded: all existing data across all databases is overwritten")
+		return
+	}
+
+	a.Debug("test data was not loaded")
 }

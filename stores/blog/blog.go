@@ -3,6 +3,8 @@ package blog
 import (
 	"reflect"
 
+	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
@@ -16,7 +18,7 @@ import (
 type blog struct {
 }
 
-func New() blog {
+func New() stores.Blog {
 	return blog{}
 }
 
@@ -133,7 +135,7 @@ func (b blog) Create(ctx *app.Context, model *models.Blog) (*models.Blog, error)
 // Update updates the blog by its ID.
 func (b blog) Update(ctx *app.Context, model *models.Blog) (*models.Blog, error) {
 	if model == nil {
-		return nil, nil //todo
+		return nil, nil
 	}
 
 	collection := ctx.Mongo.DB().Collection("blogs")

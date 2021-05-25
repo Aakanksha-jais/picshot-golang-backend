@@ -100,7 +100,7 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 			return nil, err
 		}
 
-		update.UserName = account.UserName
+		update.UserName = user.UserName
 	}
 
 	if account.FName != user.FName {
@@ -109,7 +109,7 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 			return nil, err
 		}
 
-		update.FName = account.FName
+		update.FName = user.FName
 	}
 
 	if account.LName != user.LName {
@@ -118,7 +118,7 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 			return nil, err
 		}
 
-		update.LName = account.LName
+		update.LName = user.LName
 	}
 
 	if account.Email.String != user.Email.String {
@@ -132,7 +132,7 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 			return nil, err
 		}
 
-		update.Email = account.Email
+		update.Email = user.Email
 	}
 
 	if account.PhoneNo.String != user.PhoneNo.String {
@@ -146,7 +146,7 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 			return nil, err
 		}
 
-		update.PhoneNo = account.PhoneNo
+		update.PhoneNo = user.PhoneNo
 	}
 
 	update.ID = id.(int64)
@@ -155,10 +155,8 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 }
 
 // Update updates account information based on account_id.todo
-func (a account) Update(ctx *app.Context, model *models.Account) (*models.Account, error) {
-	if model.ID == 0 {
-		return nil, errors.MissingParam{Param: "user_id"}
-	}
+func (a account) Update(ctx *app.Context, model *models.Account, id int64) (*models.Account, error) {
+	model.ID = id
 
 	return a.accountStore.Update(ctx, model)
 }
@@ -186,15 +184,17 @@ func (a account) UpdatePassword(ctx *app.Context, oldPassword, newPassword strin
 		return errors.Error{Err: err, Message: "error in hashing password", Type: "password-hash-error"}
 	}
 
-	_, err = a.accountStore.Update(ctx, &models.Account{User: models.User{ID: id.(int64), Password: string(hash)}, PwdUpdate: &sql.NullTime{Time: time.Now(), Valid: true}})
+	_, err = a.accountStore.Update(ctx, &models.Account{User: models.User{ID: id.(int64), Password: string(hash)}, PwdUpdate: sql.NullTime{Time: time.Now(), Valid: true}})
 
 	return err
 }
 
 // Delete deactivates an account and updates it's deletion request.
 // After 30 days, the account gets deleted if the status remains inactive.
-func (a account) Delete(ctx *app.Context, id int64) error {
-	return a.accountStore.Delete(ctx, id)
+func (a account) Delete(ctx *app.Context) error { // TODO: trigger a cronjob for 30 days deletion functionality
+	id := ctx.Value(auth.JWTContextKey("user_id"))
+
+	return a.accountStore.Delete(ctx, id.(int64))
 }
 
 // Create creates an account and assigns an id to it.
@@ -299,5 +299,5 @@ func (a account) Login(ctx *app.Context, user *models.User) (*models.Account, er
 		return nil, errors.AuthError{Err: err, Message: "invalid password"}
 	}
 
-	return account, nil
+	return a.Update(ctx, &models.Account{DelRequest: sql.NullTime{}, Status: "ACTIVE"}, account.ID)
 }
