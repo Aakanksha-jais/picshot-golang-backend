@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/constants"
-
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
@@ -23,19 +21,18 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var (
 		respData interface{}
 		resp     interface{}
+		errtype  string
 	)
 
-	//goland:noinspection ALL
-	errtype := setHeader(w, data, err)
-
-	if data == constants.CreateSuccess {
-		data = nil
+	if _, ok := data.(func(w http.ResponseWriter)); !ok {
+		errtype = setHeader(w, err)
 	}
 
 	switch data.(type) {
 	case *models.Account:
 		respData = getAccountResponse(data)
-
+	case func(w http.ResponseWriter):
+		data.(func(w http.ResponseWriter))(w)
 	case *models.User:
 		respData = getUserResponse(data)
 	default:
@@ -82,14 +79,10 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func setHeader(w http.ResponseWriter, data interface{}, err error) string {
+func setHeader(w http.ResponseWriter, err error) string {
 	switch err.(type) {
 	case nil:
-		if data == constants.CreateSuccess {
-			w.WriteHeader(http.StatusCreated)
-		} else {
-			w.WriteHeader(http.StatusOK)
-		}
+		w.WriteHeader(http.StatusOK)
 	case errors.DBError:
 		w.WriteHeader(http.StatusInternalServerError)
 		return "db-error"

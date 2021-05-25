@@ -2,9 +2,9 @@ package account
 
 import (
 	"database/sql"
+	"fmt"
+	"net/http"
 	"time"
-
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/constants"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 
@@ -19,106 +19,108 @@ type account struct {
 	service services.Account
 }
 
-func (a account) Login(c *app.Context) (interface{}, error) {
-	exp := time.Now().Add(30 * time.Minute)
+func (a account) Login(ctx *app.Context) (interface{}, error) {
+	exp := time.Now().Add(30 * 24 * time.Hour) //30 days for test
 
-	user, err := c.Request.UnmarshalUser()
+	user, err := ctx.Request.UnmarshalUser()
 	if err != nil {
 		return nil, err
 	}
 
-	account, err := a.service.Login(c, user)
-	if err != nil {
-		return nil, err
-	}
-
-	token, err := auth.CreateToken(auth.NewClaim(exp.Unix(), account.ID))
-	if err != nil {
-		c.Logger.Warnf("error in generating token: %v", err)
-	} else {
-		c.Logger.Debugf("token generated successfully \033[32m[expires at: %v]\033[0m", exp.Format(time.RFC850))
-
-		c.SetAuthHeader(token)
-	}
-
-	return nil, err
-}
-
-func (a account) Signup(c *app.Context) (interface{}, error) {
-	exp := time.Now().Add(30 * time.Minute)
-
-	user, err := c.Request.UnmarshalUser()
-	if err != nil {
-		return nil, err
-	}
-
-	c.Logger.Debugf("signup request for %v", user)
-
-	account, err := a.service.Create(c, user)
+	account, err := a.service.Login(ctx, user)
 	if err != nil {
 		return nil, err
 	}
 
 	token, err := auth.CreateToken(auth.NewClaim(exp.Unix(), account.ID))
 	if err != nil {
-		c.Logger.Warnf("error in generating token: %v", err)
-	} else {
-		c.Logger.Debugf("token generated successfully \033[32m[expires at: %v]\u001B[0m", exp.Format(time.RFC850))
-
-		c.SetAuthHeader(token)
+		return nil, err
 	}
 
-	return constants.CreateSuccess, err
+	ctx.Debugf("token generated successfully \033[32m[expires at: %v]\033[0m", exp.Format(time.RFC850))
+
+	return func(w http.ResponseWriter) {
+		w.Header().Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		w.WriteHeader(http.StatusOK)
+	}, nil
 }
 
-func (a account) Logout(c *app.Context) (interface{}, error) {
+func (a account) Signup(ctx *app.Context) (interface{}, error) {
+	exp := time.Now().Add(30 * 24 * time.Hour)
+
+	user, err := ctx.Request.UnmarshalUser()
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.Debugf("signup request for %v", user)
+
+	account, err := a.service.Create(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := auth.CreateToken(auth.NewClaim(exp.Unix(), account.ID))
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.Debugf("token generated successfully \033[32m[expires at: %v]\033[0m", exp.Format(time.RFC850))
+
+	return func(w http.ResponseWriter) {
+		w.Header().Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		w.WriteHeader(http.StatusCreated)
+	}, nil
+}
+
+func (a account) Logout(ctx *app.Context) (interface{}, error) {
 	return nil, nil
 }
 
-func (a account) Get(c *app.Context) (interface{}, error) {
-	id := c.Value(auth.JWTContextKey("user_id"))
+func (a account) Get(ctx *app.Context) (interface{}, error) {
+	id := ctx.Value(auth.JWTContextKey("user_id"))
 
-	c.Logger.Debugf("user with id: %v is logged in", id)
+	ctx.Debugf("user with id: %v is logged in", id)
 
-	return a.service.GetByID(c, id.(int64))
+	return a.service.GetByID(ctx, id.(int64))
 }
 
-func (a account) GetUser(c *app.Context) (interface{}, error) {
-	username := c.Request.PathParam("username")
+func (a account) GetUser(ctx *app.Context) (interface{}, error) {
+	username := ctx.Request.PathParam("username")
 
-	return a.service.GetAccountWithBlogs(c, username)
+	return a.service.GetAccountWithBlogs(ctx, username)
 }
 
 // Update updates user details but not password.
-func (a account) Update(c *app.Context) (interface{}, error) {
-	user, err := c.Request.UnmarshalUser()
+func (a account) Update(ctx *app.Context) (interface{}, error) {
+	user, err := ctx.Request.UnmarshalUser()
 	if err != nil {
 		return nil, err
 	}
 
-	return a.service.UpdateUser(c, user)
+	return a.service.UpdateUser(ctx, user)
 }
 
-func (a account) UpdatePassword(c *app.Context) (interface{}, error) {
+func (a account) UpdatePassword(ctx *app.Context) (interface{}, error) {
 	pwd := struct {
 		Old string `json:"old_password"`
 		New string `json:"new_password"`
 	}{}
 
-	err := c.Request.Unmarshal(&pwd)
+	err := ctx.Request.Unmarshal(&pwd)
 	if err != nil {
 		return nil, err
 	}
 
-	return nil, a.service.UpdatePassword(c, pwd.Old, pwd.New)
+	return nil, a.service.UpdatePassword(ctx, pwd.Old, pwd.New)
 }
 
-func (a account) CheckAvailability(c *app.Context) (interface{}, error) {
-	username := c.Request.QueryParam("username")
-	email := c.Request.QueryParam("email")
-	phone := c.Request.QueryParam("phone")
+func (a account) CheckAvailability(ctx *app.Context) (interface{}, error) {
+	username := ctx.Request.QueryParam("username")
+	email := ctx.Request.QueryParam("email")
+	phone := ctx.Request.QueryParam("phone")
 
-	return nil, a.service.CheckAvailability(c, &models.User{UserName: username, PhoneNo: sql.NullString{String: phone, Valid: true}, Email: sql.NullString{String: email, Valid: true}})
+	return nil, a.service.CheckAvailability(ctx, &models.User{UserName: username, PhoneNo: sql.NullString{String: phone, Valid: true}, Email: sql.NullString{String: email, Valid: true}})
 }
 
 func New(service services.Account) account {

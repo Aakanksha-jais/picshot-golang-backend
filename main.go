@@ -9,6 +9,7 @@ import (
 	serviceBlog "github.com/Aakanksha-jais/picshot-golang-backend/services/blog"
 	storeAccount "github.com/Aakanksha-jais/picshot-golang-backend/stores/account"
 	storeBlog "github.com/Aakanksha-jais/picshot-golang-backend/stores/blog"
+	storeImage "github.com/Aakanksha-jais/picshot-golang-backend/stores/image"
 	storeTag "github.com/Aakanksha-jais/picshot-golang-backend/stores/tag"
 )
 
@@ -19,8 +20,9 @@ func main() {
 	blogStore := storeBlog.New()
 	tagStore := storeTag.New()
 	accountStore := storeAccount.New()
+	imageStore := storeImage.New()
 
-	blogService := serviceBlog.New(blogStore, tagStore)
+	blogService := serviceBlog.New(blogStore, tagStore, imageStore)
 	accountService := serviceAccount.New(accountStore, blogService)
 
 	blogHandler := handlerBlog.New(blogService)
@@ -37,6 +39,7 @@ func main() {
 
 	// Routes for Blogs
 	app.GET("/blogs", blogHandler.GetAll)
+	app.POST("/blog", blogHandler.Create)
 	app.GET("/blogs/{blogid}", blogHandler.Get)
 	app.GET("/{accountid}/blogs", blogHandler.GetBlogsByUser)
 

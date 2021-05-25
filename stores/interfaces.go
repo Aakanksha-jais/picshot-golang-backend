@@ -1,6 +1,8 @@
 package stores
 
 import (
+	"mime/multipart"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
 )
@@ -58,4 +60,8 @@ type Tag interface {
 
 	// RemoveBlogID removes blog_id from given list of tags.
 	RemoveBlogID(c *app.Context, blogID string, tags []string) ([]*models.Tag, error)
+}
+
+type Image interface {
+	Upload(c *app.Context, fileHeader *multipart.FileHeader, name string) error
 }

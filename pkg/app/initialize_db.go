@@ -1,19 +1,20 @@
-package test
+package app
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
-
+	"github.com/gchaincl/dotsql"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func InitializeTestDB(db *mongo.Database, logger log.Logger) {
+func InitializeDB(db *mongo.Database, sqlDB *sql.DB, logger log.Logger) {
 	ctx := context.TODO()
 
-	bytes, err := ioutil.ReadFile("../../db/test_blogs.json")
+	bytes, err := ioutil.ReadFile("./db/blogs.json")
 	if err != nil {
 		logger.Errorf("cannot read file blogs.json: %v", err.Error())
 	}
@@ -33,7 +34,7 @@ func InitializeTestDB(db *mongo.Database, logger log.Logger) {
 		logger.Errorf("cannot insert data into blogs collection: %v", err.Error())
 	}
 
-	bytes, err = ioutil.ReadFile("../../db/test_tags.json")
+	bytes, err = ioutil.ReadFile("./db/tags.json")
 	if err != nil {
 		logger.Errorf("cannot read file tags.json: %v", err.Error())
 	}
@@ -50,4 +51,24 @@ func InitializeTestDB(db *mongo.Database, logger log.Logger) {
 	if err != nil {
 		logger.Errorf("cannot insert data into tags collection: %v", err.Error())
 	}
+
+	dot, err := dotsql.LoadFromFile("./db/schema.sql")
+	if err != nil {
+		logger.Errorf("cannot read file schema.sql: %v", err.Error())
+	}
+
+	dot.Exec(sqlDB, "drop")
+	dot.Exec(sqlDB, "create")
+	dot.Exec(sqlDB, "use")
+	dot.Exec(sqlDB, "create-table")
+
+	dot, err = dotsql.LoadFromFile("./db/test_data.sql")
+	if err != nil {
+		logger.Errorf("cannot read file schema.sql: %v", err.Error())
+	}
+
+	dot.Exec(sqlDB, "use")
+	dot.Exec(sqlDB, "insert-aakanksha")
+	dot.Exec(sqlDB, "insert-mainak")
+	dot.Exec(sqlDB, "insert-divij")
 }

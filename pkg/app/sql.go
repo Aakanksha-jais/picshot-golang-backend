@@ -64,7 +64,7 @@ func GetNewSQLClient(logger log.Logger, config configs.Config) (SQLClient, error
 		return sqlClient{}, err
 	}
 
-	logger.Infof("connected to mysql: [ %v@%v at port: %v ]", sqlConfig.Username, sqlConfig.HostName, sqlConfig.Port)
+	logger.Infof("connected to mysql: [%v@%v at port: %v]", sqlConfig.Username, sqlConfig.HostName, sqlConfig.Port)
 
 	return sqlClient{DB: db}, nil
 }

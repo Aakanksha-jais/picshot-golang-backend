@@ -16,7 +16,7 @@ import (
 )
 
 func initializeTest() (*app.Context, stores.Blog) {
-	test.PrepDB(a.Mongo.DB())
+	test.InitializeTestDB(a.Mongo.DB(), a.Logger)
 	return &app.Context{Context: context.TODO(), App: a}, New()
 }
 

@@ -2,6 +2,7 @@ package blog
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 
@@ -20,12 +21,12 @@ func New(service services.Blog) blog {
 	}
 }
 
-func (b blog) GetAll(c *app.Context) (interface{}, error) {
-	return b.service.GetAll(c, nil)
+func (b blog) GetAll(ctx *app.Context) (interface{}, error) {
+	return b.service.GetAll(ctx, nil)
 }
 
-func (b blog) GetBlogsByUser(c *app.Context) (interface{}, error) {
-	accountID := c.Request.PathParam("accountid")
+func (b blog) GetBlogsByUser(ctx *app.Context) (interface{}, error) {
+	accountID := ctx.Request.PathParam("accountid")
 
 	if accountID == "" {
 		return nil, errors.MissingParam{Param: "account ID"}
@@ -36,11 +37,24 @@ func (b blog) GetBlogsByUser(c *app.Context) (interface{}, error) {
 		return nil, errors.InvalidParam{Param: "account ID"}
 	}
 
-	return b.service.GetAll(c, &models.Blog{AccountID: int64(id)})
+	return b.service.GetAll(ctx, &models.Blog{AccountID: int64(id)})
 }
 
-func (b blog) Get(c *app.Context) (interface{}, error) {
-	blogID := c.Request.PathParam("blogid")
+func (b blog) Get(ctx *app.Context) (interface{}, error) {
+	blogID := ctx.Request.PathParam("blogid")
 
-	return b.service.GetByID(c, blogID)
+	return b.service.GetByID(ctx, blogID)
+}
+
+func (b blog) Create(ctx *app.Context) (interface{}, error) {
+	fileHeaders := ctx.Request.ParseImages()
+
+	blog := &models.Blog{
+		Title:   ctx.Request.FormValue("title"),
+		Summary: ctx.Request.FormValue("summary"),
+		Content: ctx.Request.FormValue("content"),
+		Tags:    strings.Split(ctx.Request.FormValue("tags"), ","),
+	}
+
+	return b.service.Create(ctx, blog, fileHeaders)
 }
