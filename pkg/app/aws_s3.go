@@ -26,8 +26,11 @@ type S3Config struct {
 }
 
 func GetNewS3(logger log.Logger, config configs.Config) (AWSS3, error) {
-	awsConfigs := &aws.Config{Region: aws.String("ap-south-1"), Logger: logger}
-	awsConfigs.WithLogLevel(aws.LogDebug)
+	awsConfigs := &aws.Config{Region: aws.String(config.GetOrDefault("AWS_REGION", "ap-south-1")), Logger: logger}
+
+	if config.Get("LOG_LEVEL") == log.DEBUG.String() {
+		awsConfigs.WithLogLevel(aws.LogDebug)
+	}
 
 	sess, err := session.NewSession(awsConfigs)
 	if err != nil {
