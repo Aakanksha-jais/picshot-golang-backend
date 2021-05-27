@@ -1,0 +1,27 @@
+version: '3.9'
+services:
+  mysql:
+    container_name: 'mysql-container'
+    image: 'mysql'
+    restart: 'always'
+    environment:
+      MYSQL_ROOT_PASSWORD : 'root123'
+      MYSQL_USER : 'admin'
+      MYSQL_PASSWORD : 'admin123'
+      MYSQL_DATABASE : 'picshot'
+    expose:
+      - '3306'
+    ports:
+    - '3306:3306'
+  mongo:
+    container_name: 'mongo-container'
+    image: 'mongo'
+    restart: 'always'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: 'admin'
+      MONGO_INITDB_ROOT_PASSWORD: 'admin123'
+      MONGO_INITDB_DATABASE: 'picshot'
+    expose:
+      - '27017'
+    ports:
+    - '27017:27017'

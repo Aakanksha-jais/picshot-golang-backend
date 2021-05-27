@@ -15,6 +15,9 @@ import (
 
 func main() {
 	app := picshot.New()
+	if app == nil {
+		return
+	}
 
 	// Dependency Injection
 	blogStore := storeBlog.New()

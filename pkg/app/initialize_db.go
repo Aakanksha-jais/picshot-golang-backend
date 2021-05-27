@@ -24,7 +24,7 @@ func AddTestData(db *mongo.Database, sqlDB *sql.DB, awsS3 AWSS3, logger log.Logg
 
 	InitializeTestAccountsTable(sqlDB, logger, "./db")
 
-	InitializeTestAWSBucket(awsS3, os.Getenv("AWS_BUCKET"), logger, "./db")
+	//InitializeTestAWSBucket(awsS3, os.Getenv("AWS_BUCKET"), logger, "./db")
 }
 
 func InitializeTestAWSBucket(awsS3 AWSS3, bucket string, logger log.Logger, directory string) {

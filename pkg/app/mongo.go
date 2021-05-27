@@ -83,7 +83,7 @@ func GetNewMongoDB(logger log.Logger, config configs.Config) (MongoDB, error) {
 
 	clientOptions := options.Client().ApplyURI(connectionString)
 
-	const defaultMongoTimeout = 3
+	const defaultMongoTimeout = 10
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(defaultMongoTimeout)*time.Second)
 
 	defer cancel()
