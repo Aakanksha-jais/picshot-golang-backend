@@ -1,0 +1,68 @@
+name: CICI-Pipeline
+on:
+  push:
+    branches:
+      - master
+      - development
+  pull_request:
+    branches:
+      - master
+      - development
+jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: 'mongo'
+        env:
+          MONGO_INITDB_ROOT_USERNAME: 'admin'
+          MONGO_INITDB_ROOT_PASSWORD: 'admin123'
+          MONGO_INITDB_DATABASE: 'picshot'
+        ports:
+          - '27017:27017'
+      my-sql:
+        image: 'mysql'
+        env:
+          MYSQL_ROOT_PASSWORD: 'root123'
+          MYSQL_USER: 'admin'
+          MYSQL_PASSWORD: 'admin123'
+          MYSQL_DATABASE: 'picshot'
+        ports:
+          - '3306:3306'
+    steps:
+      - name: Checkout Code to Go Module Directory
+        uses: actions/checkout@v2
+
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+        id: go
+
+      - name: Get Dependencies
+        run: go get -v -t -d ./...
+
+      - name: Build
+        run: |
+          - go build
+
+      - name: Test
+        run: |
+          mkdir build
+          go test -count=1 -p=1 ./... -v -coverprofile build/coverage.out -coverpkg=./...
+          go tool cover -func=build/coverage.out
+
+  code-quality-check:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    container: 'golangci/golangci-lint:v1.38.0'
+    steps:
+      - name: Checkout Code to Go Module Directory
+        uses: actions/checkout@v2
+
+      - name : Get Dependencies
+        run: go get -v -t -d ./...
+
+      - name: GolangCI-Lint
+        run: golangci-lint run --timeout 5m0s
