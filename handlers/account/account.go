@@ -19,6 +19,7 @@ import (
 
 type account struct {
 	service services.Account
+	claims  auth.Claims
 }
 
 func New(service services.Account) handlers.Account {
@@ -38,7 +39,9 @@ func (a account) Login(ctx *app.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	token, err := auth.CreateToken(auth.NewClaim(exp.Unix(), account.ID))
+	a.claims = auth.New(exp.Unix(), account.ID)
+
+	token, err := a.claims.CreateToken()
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +69,9 @@ func (a account) Signup(ctx *app.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	token, err := auth.CreateToken(auth.NewClaim(exp.Unix(), account.ID))
+	a.claims = auth.New(exp.Unix(), account.ID)
+
+	token, err := a.claims.CreateToken()
 	if err != nil {
 		return nil, err
 	}

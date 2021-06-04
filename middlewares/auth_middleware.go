@@ -9,7 +9,9 @@ import (
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 )
 
-func Authentication(logger log.Logger) func(inner http.Handler) http.Handler {
+const headerLength = 2
+
+func Authentication(logger log.Logger, claims auth.Claims) func(inner http.Handler) http.Handler {
 	return func(inner http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			logger.Debugf("request on endpoint: %s", r.URL.String())
@@ -20,7 +22,7 @@ func Authentication(logger log.Logger) func(inner http.Handler) http.Handler {
 			}
 
 			authHeader := strings.Split(r.Header.Get("Authorization"), " ")
-			if len(authHeader) != 2 {
+			if len(authHeader) != headerLength {
 				logger.Errorf("cannot fetch auth-token (invalid auth-header): %v", authHeader)
 				w.WriteHeader(http.StatusUnauthorized)
 
@@ -29,7 +31,7 @@ func Authentication(logger log.Logger) func(inner http.Handler) http.Handler {
 
 			jwtToken := authHeader[1]
 
-			claim, err := auth.ParseToken(jwtToken)
+			err := claims.ParseToken(jwtToken)
 			if err != nil {
 				logger.Error(err)
 				w.WriteHeader(http.StatusUnauthorized)
@@ -38,8 +40,8 @@ func Authentication(logger log.Logger) func(inner http.Handler) http.Handler {
 			}
 
 			jwtIDKey := auth.JWTContextKey("user_id")
-			r = r.WithContext(context.WithValue(r.Context(), jwtIDKey, claim.UserID))
-			logger.Debugf("user_id: %v authorised to make request on %v.", r.Context().Value(jwtIDKey), r.URL.Path)
+			r = r.WithContext(context.WithValue(r.Context(), jwtIDKey, claims.GetUserID()))
+			logger.Debugf("user_id: %v authorized to make request on %v.", r.Context().Value(jwtIDKey), r.URL.Path)
 
 			inner.ServeHTTP(w, r)
 		})

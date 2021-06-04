@@ -10,13 +10,20 @@ import (
 
 type JWTContextKey string
 
-type Claims struct {
+type Claims interface {
+	Valid() error
+	CreateToken() (string, error)
+	ParseToken(signedToken string) error
+	GetUserID() int64
+}
+
+type claims struct {
 	jwt.StandardClaims
 	UserID int64 `json:"user_id"`
 }
 
-func NewClaim(exp, userID int64) *Claims {
-	return &Claims{
+func New(exp, userID int64) *claims {
+	return &claims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: exp,
 		},
@@ -24,7 +31,15 @@ func NewClaim(exp, userID int64) *Claims {
 	}
 }
 
-func (c *Claims) Valid() error {
+func NewEmptyClaim() *claims {
+	return &claims{}
+}
+
+func (c *claims) GetUserID() int64 {
+	return c.UserID
+}
+
+func (c *claims) Valid() error {
 	if !c.VerifyExpiresAt(time.Now().Unix(), true) {
 		return errors.AuthError{Message: "token expired. log in again"}
 	}
@@ -36,7 +51,7 @@ func (c *Claims) Valid() error {
 	return nil
 }
 
-func CreateToken(c *Claims) (string, error) {
+func (c *claims) CreateToken() (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, c)
 
 	signedToken, err := token.SignedString([]byte(os.Getenv("ACCESS_KEY")))
@@ -47,8 +62,8 @@ func CreateToken(c *Claims) (string, error) {
 	return signedToken, nil
 }
 
-func ParseToken(signedToken string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(signedToken, &Claims{}, func(t *jwt.Token) (interface{}, error) {
+func (c *claims) ParseToken(signedToken string) error {
+	token, err := jwt.ParseWithClaims(signedToken, &claims{}, func(t *jwt.Token) (interface{}, error) {
 		if t.Method.Alg() != jwt.SigningMethodHS512.Alg() {
 			return nil, errors.AuthError{Message: "invalid signing algorithm"}
 		}
@@ -57,10 +72,11 @@ func ParseToken(signedToken string) (*Claims, error) {
 	})
 
 	if err == nil && token != nil {
-		if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-			return claims, nil
+		if claims, ok := token.Claims.(*claims); ok && token.Valid {
+			c = claims
+			return nil
 		}
 	}
 
-	return nil, errors.AuthError{Message: "invalid token", Err: err}
+	return errors.AuthError{Message: "invalid token", Err: err}
 }
