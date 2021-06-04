@@ -1,5 +1,18 @@
 version: '3.9'
 services:
+  app:
+    container_name: 'app-container'
+    depends_on:
+      - mysql
+      - mongo
+    build: .
+    expose:
+      - '8000'
+    ports:
+      - '8000:8000'
+    links:
+      - mongo
+      - mysql
   mysql:
     container_name: 'mysql-container'
     image: 'mysql'
@@ -11,8 +24,6 @@ services:
       MYSQL_DATABASE : 'picshot'
     volumes:
     - '$HOME/data/mysql:/var/lib/mysql'
-    expose:
-      - '3306'
     ports:
     - '3306:3306'
   mongo:
@@ -25,7 +36,5 @@ services:
       MONGO_INITDB_DATABASE: 'picshot'
     volumes:
     - '$HOME/data/mongo:/data/db'
-    expose:
-      - '27017'
     ports:
     - '27017:27017'
