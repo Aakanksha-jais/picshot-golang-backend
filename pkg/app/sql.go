@@ -16,7 +16,6 @@ type SQLClient interface {
 
 type sqlClient struct {
 	*sql.DB
-	logger log.Logger
 	config *SQLConfig
 }
 
@@ -66,5 +65,5 @@ func GetNewSQLClient(logger log.Logger, config configs.Config) (SQLClient, error
 
 	logger.Infof("connected to mysql: [%v@%v at port: %v]", sqlConfig.Username, sqlConfig.HostName, sqlConfig.Port)
 
-	return sqlClient{DB: db}, nil
+	return sqlClient{DB: db, config: sqlConfig}, nil
 }

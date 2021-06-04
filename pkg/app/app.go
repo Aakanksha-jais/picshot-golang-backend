@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/constants"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 )
@@ -27,10 +29,6 @@ func New() *App {
 	app.Logger = log.NewLogger()
 
 	app.initializeStores(app.Config)
-
-	if app.Mongo.DB() == nil || app.SQL.GetDB() == nil {
-		return nil
-	}
 
 	// For Testing
 	app.loadTestData()
@@ -98,12 +96,9 @@ func (a *App) initializeStores(config configs.Config) {
 	}
 }
 
-const maxRetries = 5
-const retryDuration = 3
-
 func mongoRetry(config configs.Config, app *App) {
-	for i := 0; i < maxRetries; i++ {
-		time.Sleep(time.Duration(retryDuration) * time.Second)
+	for i := 0; i < constants.MaxRetries; i++ {
+		time.Sleep(time.Duration(constants.RetryDuration) * time.Second)
 
 		app.Debug("retrying mongo connection")
 
@@ -120,8 +115,8 @@ func mongoRetry(config configs.Config, app *App) {
 }
 
 func sqlRetry(config configs.Config, app *App) {
-	for i := 0; i < maxRetries; i++ {
-		time.Sleep(time.Duration(retryDuration) * time.Second)
+	for i := 0; i < constants.MaxRetries; i++ {
+		time.Sleep(time.Duration(constants.RetryDuration) * time.Second)
 
 		app.Debug("retrying sql connection")
 
@@ -138,8 +133,8 @@ func sqlRetry(config configs.Config, app *App) {
 }
 
 func s3Retry(config configs.Config, app *App) {
-	for i := 0; i < maxRetries; i++ {
-		time.Sleep(time.Duration(retryDuration) * time.Second)
+	for i := 0; i < constants.MaxRetries; i++ {
+		time.Sleep(time.Duration(constants.RetryDuration) * time.Second)
 
 		app.Debug("retrying s3 session creation")
 

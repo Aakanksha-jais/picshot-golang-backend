@@ -28,11 +28,11 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errtype = setHeader(w, err)
 	}
 
-	switch data.(type) {
+	switch data := data.(type) {
 	case *models.Account:
 		respData = getAccountResponse(data)
 	case func(w http.ResponseWriter):
-		data.(func(w http.ResponseWriter))(w)
+		data(w)
 	case *models.User:
 		respData = getUserResponse(data)
 	default:
@@ -80,7 +80,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func setHeader(w http.ResponseWriter, err error) string {
-	switch err.(type) {
+	switch err := err.(type) {
 	case nil:
 		w.WriteHeader(http.StatusOK)
 	case errors.DBError:
@@ -100,7 +100,7 @@ func setHeader(w http.ResponseWriter, err error) string {
 		return "auth-error"
 	case errors.Error:
 		w.WriteHeader(http.StatusInternalServerError)
-		return err.(errors.Error).Type
+		return err.Type
 	case errors.EntityAlreadyExists:
 		w.WriteHeader(http.StatusBadRequest)
 		return "entity-already-exists"
