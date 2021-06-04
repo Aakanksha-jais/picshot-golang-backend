@@ -73,7 +73,7 @@ func (c *claims) ParseToken(signedToken string) error {
 
 	if err == nil && token != nil {
 		if claims, ok := token.Claims.(*claims); ok && token.Valid {
-			c = claims
+			*c = *claims
 			return nil
 		}
 	}
