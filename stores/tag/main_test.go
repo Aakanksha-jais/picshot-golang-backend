@@ -1,4 +1,4 @@
-package blog
+package tag
 
 import (
 	"os"

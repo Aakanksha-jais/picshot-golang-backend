@@ -24,10 +24,15 @@ func New() stores.Blog {
 
 // GetAll is used to retrieve all blogs that match the filter.
 // BLogs can be filtered by account_id, blog_id and title.
-func (b blog) GetAll(ctx *app.Context, filter *models.Blog) ([]*models.Blog, error) {
+func (b blog) GetAll(ctx *app.Context, filter *models.Blog, page *models.Page) ([]*models.Blog, error) {
 	collection := ctx.Mongo.DB().Collection("blogs")
 
-	opts := options.Find().SetSort(bson.D{{Key: "_id", Value: -1}}) // retrieve the blogs in reverse chronological order
+	opts := options.Find().SetSort(bson.D{{Key: "created_on", Value: -1}}) // retrieve the blogs in reverse chronological order
+
+	if page != nil {
+		opts = opts.SetSkip((page.PageNo - 1) * page.Limit).SetLimit(page.Limit)
+
+	}
 
 	cursor, err := collection.Find(ctx, filter.GetFilter(), opts)
 	if err != nil {
@@ -59,7 +64,9 @@ func (b blog) GetAll(ctx *app.Context, filter *models.Blog) ([]*models.Blog, err
 func (b blog) GetByIDs(ctx *app.Context, idList []string) ([]*models.Blog, error) {
 	collection := ctx.Mongo.DB().Collection("blogs")
 
-	cursor, err := collection.Find(ctx, bson.M{"_id": bson.M{"$in": idList}})
+	opts := options.Find().SetSort(bson.D{{Key: "created_on", Value: -1}})
+
+	cursor, err := collection.Find(ctx, bson.M{"_id": bson.M{"$in": idList}}, opts)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}

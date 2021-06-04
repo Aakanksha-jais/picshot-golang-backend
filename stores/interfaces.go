@@ -3,6 +3,8 @@ package stores
 import (
 	"mime/multipart"
 
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/constants"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
 )
@@ -28,7 +30,7 @@ type Account interface {
 type Blog interface {
 	// GetAll is used to retrieve all blogs that match the filter.
 	// BLogs can be filtered by account_id, blog_id and title.
-	GetAll(c *app.Context, filter *models.Blog) ([]*models.Blog, error)
+	GetAll(c *app.Context, filter *models.Blog, page *models.Page) ([]*models.Blog, error)
 
 	// GetByIDs retrieves all blogs whose IDs have been provided as parameter.
 	GetByIDs(c *app.Context, idList []string) ([]*models.Blog, error)
@@ -49,20 +51,26 @@ type Blog interface {
 }
 
 type Tag interface {
-	// GetByName retrieves a tag by its name.
+	// Get retrieves a tag by its name.
 	// A tag name uniquely identifies a tag entity.
 	// The tag entity has tag name and list of blog_id's associated with the tag.
-	GetByName(c *app.Context, name string) (*models.Tag, error)
+	Get(c *app.Context, name string) (*models.Tag, error)
 
-	// AddBlogID adds blog_id to given list of tags.
+	// Update adds blog_id to given list of tags.
 	// Tags are created if they do not exist already.
-	AddBlogID(c *app.Context, blogID string, tags []string) ([]*models.Tag, error)
+	Update(c *app.Context, blogID string, tag string, operation constants.Operation) error
 
-	// RemoveBlogID removes blog_id from given list of tags.
-	RemoveBlogID(c *app.Context, blogID string, tags []string) ([]*models.Tag, error)
+	// Create creates a tag.
+	Create(c *app.Context, tag *models.Tag) error
+
+	// Delete removes a tag by its name.
+	Delete(c *app.Context, tag string) error
 }
 
 type Image interface {
+	// Upload uploads a file to S3 Bucket.
 	Upload(c *app.Context, fileHeader *multipart.FileHeader, name string) error
+
+	// DeleteBulk deletes multiple files whose names are passed as parameter.
 	DeleteBulk(ctx *app.Context, names []string) error
 }

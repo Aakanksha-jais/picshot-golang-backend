@@ -1,4 +1,4 @@
-package blog
+package account
 
 import (
 	"os"
@@ -16,9 +16,9 @@ func TestMain(m *testing.M) {
 
 	testLogger := log.NewLogger()
 	testConfigs := configs.NewConfigLoader("../../configs")
-	mongoDB, _ := app.GetNewMongoDB(testLogger, testConfigs)
+	db, _ := app.GetNewSQLClient(testLogger, testConfigs)
 
-	a = &app.App{Logger: testLogger, Config: testConfigs, DataStore: app.DataStore{Mongo: mongoDB}}
+	a = &app.App{Logger: testLogger, Config: testConfigs, DataStore: app.DataStore{SQL: db}}
 
 	os.Exit(m.Run())
 }
