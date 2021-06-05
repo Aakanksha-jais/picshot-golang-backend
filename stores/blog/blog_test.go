@@ -132,6 +132,7 @@ func TestBlog_GetByIDs(t *testing.T) {
 		description string
 		input       []string
 		output      []*models.Blog
+		page        *models.Page
 		err         error
 	}{
 		{
@@ -142,7 +143,8 @@ func TestBlog_GetByIDs(t *testing.T) {
 				{BlogID: "9SH7SH2V37", AccountID: 2, Title: "memories", Summary: "a blog on memories", Content: "the best of childhood days!", Tags: []string{"#memories", "#life"}, CreatedOn: getTime("2021-04-08T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/girl.jpeg", "https://picshot-images.s3.ap-south-1.amazonaws.com/kid.jpg"}},
 				{BlogID: "MSO8WB2J7X", AccountID: 3, Title: "books", Summary: "a blog on books", Content: "the subtle art of not giving a fuck- an award winner", Tags: []string{"#markmanson"}, CreatedOn: getTime("2021-02-12T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/book.jpg"}},
 			},
-			err: nil,
+			page: &models.Page{Limit: 3, PageNo: 1},
+			err:  nil,
 		},
 		{
 			description: "get blogs (in reverse chronological order always)",
@@ -151,15 +153,15 @@ func TestBlog_GetByIDs(t *testing.T) {
 				{BlogID: "MSI8WKNSH9", AccountID: 2, Title: "music", Summary: "a blog on music", Content: "avicii left :(", Tags: []string{}, CreatedOn: getTime("2021-05-23T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/avicii.jpg"}},
 				{BlogID: "9SH7SH2V37", AccountID: 2, Title: "memories", Summary: "a blog on memories", Content: "the best of childhood days!", Tags: []string{"#memories", "#life"}, CreatedOn: getTime("2021-04-08T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/girl.jpeg", "https://picshot-images.s3.ap-south-1.amazonaws.com/kid.jpg"}},
 				{BlogID: "MSO8WB2J7X", AccountID: 3, Title: "books", Summary: "a blog on books", Content: "the subtle art of not giving a fuck- an award winner", Tags: []string{"#markmanson"}, CreatedOn: getTime("2021-02-12T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/book.jpg"}},
-				{BlogID: "POQA7B2J7X", AccountID: 1, Title: "love", Summary: "a blog on love", Content: "<3", Tags: []string{"#love", "life", "#trending"}, CreatedOn: getTime("2019-03-16T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/3b6c399e8f5d9d4f54f4d91c6db7cfde.jpg"}},
 			},
-			err: nil,
+			page: &models.Page{Limit: 3, PageNo: 1},
+			err:  nil,
 		},
 		{description: "get blogs with non-existing id", input: []string{"DUMMY_ID_123"}, output: []*models.Blog(nil), err: nil},
 	}
 
 	for i := range tests {
-		output, err := blog.GetByIDs(ctx, tests[i].input)
+		output, err := blog.GetByIDs(ctx, tests[i].input, tests[i].page)
 
 		if assert.Equal(t, len(tests[i].output), len(output), "TEST [%v], failed.\n%s", i+1, tests[i].description) {
 			for j := range output {
@@ -190,7 +192,7 @@ func TestBlog_GetByIDs_Error(t *testing.T) {
 		err         error
 	}{description: "get blog with blog id = TEST_ID", input: []string{"TEST_ID"}, err: errors.DBError{}}
 
-	output, err := blog.GetByIDs(ctx, tc.input)
+	output, err := blog.GetByIDs(ctx, tc.input, &models.Page{Limit: 3, PageNo: 1})
 
 	assert.Equal(t, tc.output, output, "TEST, failed.\n%s", tc.description)
 

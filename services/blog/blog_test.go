@@ -63,13 +63,15 @@ func TestBlog_GetAll(t *testing.T) {
 func TestBlog_GetAllByTagName(t *testing.T) {
 	mockBlogStore, mockTagService, _, ctx, mockBlogService := initializeTest(t)
 
+	page := &models.Page{Limit: 3, PageNo: 1}
+
 	mockTagService.EXPECT().Get(gomock.Any(), "#tag1").Return(&models.Tag{Name: "#tag1", BlogIDList: []string{"MSI8WKNSH9", "9SNVSH8K2M", "ABK7SH2V37"}}, nil)
-	mockBlogStore.EXPECT().GetByIDs(gomock.Any(), []string{"MSI8WKNSH9", "9SNVSH8K2M", "ABK7SH2V37"}).Return(getAllOutput(), nil)
+	mockBlogStore.EXPECT().GetByIDs(gomock.Any(), []string{"MSI8WKNSH9", "9SNVSH8K2M", "ABK7SH2V37"}, page).Return(getAllOutput(), nil)
 
 	mockTagService.EXPECT().Get(gomock.Any(), "#tag2").Return(nil, errors.DBError{})
 
 	mockTagService.EXPECT().Get(gomock.Any(), "#tag3").Return(&models.Tag{Name: "#tag3", BlogIDList: []string{"MSI8WKNSH9", "9SNVSH8K2M", "ABK7SH2V37"}}, nil)
-	mockBlogStore.EXPECT().GetByIDs(gomock.Any(), []string{"MSI8WKNSH9", "9SNVSH8K2M", "ABK7SH2V37"}).Return(nil, errors.DBError{})
+	mockBlogStore.EXPECT().GetByIDs(gomock.Any(), []string{"MSI8WKNSH9", "9SNVSH8K2M", "ABK7SH2V37"}, page).Return(nil, errors.DBError{})
 
 	tests := []struct {
 		description string
@@ -77,13 +79,13 @@ func TestBlog_GetAllByTagName(t *testing.T) {
 		output      []*models.Blog
 		err         error
 	}{
-		{description: "success case", input: "#tag1", output: getAllOutput(), err: nil},
-		{description: "db error in call to tagService.Get", input: "#tag2", output: nil, err: errors.DBError{}},
-		{description: "db error in call to tagService.Get", input: "#tag3", output: nil, err: errors.DBError{}},
+		{description: "success case", input: "tag1", output: getAllOutput(), err: nil},
+		{description: "db error in call to tagService.Get", input: "tag2", output: nil, err: errors.DBError{}},
+		{description: "db error in call to tagService.Get", input: "tag3", output: nil, err: errors.DBError{}},
 	}
 
 	for i, tc := range tests {
-		output, err := mockBlogService.GetAllByTagName(ctx, tc.input)
+		output, err := mockBlogService.GetAllByTagName(ctx, tc.input, page)
 
 		if assert.Equal(t, len(tc.output), len(output), "TEST [%v], failed.\n%s", i+1, tc.description) {
 			for j := range output {

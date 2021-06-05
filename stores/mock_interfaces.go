@@ -194,18 +194,18 @@ func (mr *MockBlogMockRecorder) GetAll(c, filter, page interface{}) *gomock.Call
 }
 
 // GetByIDs mocks base method.
-func (m *MockBlog) GetByIDs(c *app.Context, idList []string) ([]*models.Blog, error) {
+func (m *MockBlog) GetByIDs(c *app.Context, idList []string, page *models.Page) ([]*models.Blog, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByIDs", c, idList)
+	ret := m.ctrl.Call(m, "GetByIDs", c, idList, page)
 	ret0, _ := ret[0].([]*models.Blog)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByIDs indicates an expected call of GetByIDs.
-func (mr *MockBlogMockRecorder) GetByIDs(c, idList interface{}) *gomock.Call {
+func (mr *MockBlogMockRecorder) GetByIDs(c, idList, page interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByIDs", reflect.TypeOf((*MockBlog)(nil).GetByIDs), c, idList)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByIDs", reflect.TypeOf((*MockBlog)(nil).GetByIDs), c, idList, page)
 }
 
 // Update mocks base method.
