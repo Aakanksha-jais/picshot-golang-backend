@@ -7,6 +7,8 @@ import (
 	"os"
 	"sync"
 
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/middlewares"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 )
@@ -34,7 +36,7 @@ func NewServer(app *App) *server {
 
 	if app.Config.GetOrDefault("ENABLE_AUTH", "YES") == "YES" {
 		app.Infof("authentication middleware enabled")
-		s.Router.Use(middlewares.Authentication(app))
+		s.Router.Use(middlewares.Authentication(app.Logger, auth.NewEmptyClaim()))
 	} else {
 		app.Warnf("authentication middleware disabled, some endpoints will not run")
 	}

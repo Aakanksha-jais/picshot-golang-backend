@@ -49,7 +49,7 @@ func (i image) Upload(ctx *app.Context, fileHeader *multipart.FileHeader, name s
 		ContentType:   aws.String(http.DetectContentType(buffer)),
 	}
 
-	if err := input.Validate(); err != nil {
+	if err = input.Validate(); err != nil {
 		err := err.(request.ErrInvalidParams)
 
 		return errors.DBError{Err: err.OrigErr()}

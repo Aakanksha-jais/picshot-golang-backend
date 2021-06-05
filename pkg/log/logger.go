@@ -137,6 +137,10 @@ func NewLogger() Logger {
 	return newLogger(getLevel(os.Getenv("LOG_LEVEL")))
 }
 
+func NewMockLogger(output io.Writer) Logger {
+	return &logger{level: DEBUG, out: output}
+}
+
 func getLevel(level string) level {
 	switch strings.ToUpper(level) {
 	case "INFO":

@@ -58,6 +58,8 @@ const (
 // The color method returns the formatting color associated with the level.
 func (l level) color() uint {
 	switch l {
+	case DEBUG:
+		return normal
 	case ERROR, FATAL:
 		return red
 	case WARN:

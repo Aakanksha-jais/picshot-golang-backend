@@ -21,4 +21,5 @@ type Blog interface {
 	Browse(ctx *app.Context) (interface{}, error)
 	Delete(ctx *app.Context) (interface{}, error)
 	Create(ctx *app.Context) (interface{}, error)
+	Update(ctx *app.Context) (interface{}, error)
 }

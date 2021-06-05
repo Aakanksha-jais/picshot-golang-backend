@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -19,9 +18,6 @@ import (
 )
 
 func AddTestData(db *mongo.Database, sqlDB *sql.DB, awsS3 AWSS3, logger log.Logger) {
-	if db == nil || sqlDB == nil {
-		time.Sleep(10 * time.Second)
-	}
 	InitializeTestBlogsCollection(db, logger, "./db")
 
 	InitializeTestTagsCollection(db, logger, "./db")
@@ -129,6 +125,7 @@ func InitializeTestTagsCollection(db *mongo.Database, logger log.Logger, directo
 	}
 }
 
+//nolint
 func InitializeTestBlogsCollection(db *mongo.Database, logger log.Logger, directory string) {
 	file := directory + "/test/blogs.json"
 

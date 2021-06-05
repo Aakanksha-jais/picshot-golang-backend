@@ -6,15 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
-
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 )
 
-type account struct {
-}
+type account struct{}
 
 func New() stores.Account {
 	return account{}
@@ -52,6 +50,7 @@ func (a account) GetAll(ctx *app.Context, filter *models.Account) ([]*models.Acc
 	}
 
 	ctx.Debugf("successful execution of 'GetAll' accounts in storage layer")
+
 	return accounts, nil
 }
 
@@ -114,6 +113,7 @@ func (a account) Update(ctx *app.Context, model *models.Account) (*models.Accoun
 	query, qp := generateSetClause(model)
 
 	query = fmt.Sprintf("%s WHERE id = ?;", query)
+
 	qp = append(qp, model.ID)
 
 	_, err := db.ExecContext(ctx, query, qp...)
@@ -170,6 +170,7 @@ func generateSetClause(model *models.Account) (setClause string, qp []interface{
 	}
 
 	setClause += " del_req = ?,"
+
 	qp = append(qp, model.DelRequest)
 
 	setClause = strings.TrimSuffix(setClause, ",")

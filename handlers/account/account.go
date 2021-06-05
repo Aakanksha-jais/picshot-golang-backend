@@ -27,7 +27,7 @@ func New(service services.Account) handlers.Account {
 }
 
 func (a account) Login(ctx *app.Context) (interface{}, error) {
-	exp := time.Now().Add(30 * 24 * time.Hour) //30 days for test
+	exp := time.Now().Add(24 * time.Hour)
 
 	user, err := ctx.Request.UnmarshalUser()
 	if err != nil {
@@ -55,7 +55,7 @@ func (a account) Login(ctx *app.Context) (interface{}, error) {
 }
 
 func (a account) Signup(ctx *app.Context) (interface{}, error) {
-	exp := time.Now().Add(30 * 24 * time.Hour)
+	exp := time.Now().Add(24 * time.Hour)
 
 	user, err := ctx.Request.UnmarshalUser()
 	if err != nil {

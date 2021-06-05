@@ -54,6 +54,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Msg  string `json:"msg,omitempty"`
 			Type string `json:"type,omitempty"`
 		}
+
 		resp = struct {
 			Status string    `json:"status"`
 			Err    respError `json:"error"`
@@ -148,6 +149,7 @@ func getUserResponse(data interface{}) userResp {
 	if user.PhoneNo.String != "" {
 		u.PhoneNo = &user.PhoneNo.String
 	}
+
 	return u
 }
 
@@ -195,5 +197,6 @@ func getAccountResponse(data interface{}) accountResp {
 	if account.DelRequest.Valid {
 		a.DelRequest = &account.DelRequest.Time
 	}
+
 	return a
 }

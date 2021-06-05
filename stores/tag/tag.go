@@ -40,7 +40,7 @@ func (t tag) Get(c *app.Context, name string) (*models.Tag, error) {
 
 // Update adds blog_id to given list of tags.
 // Tags are created if they do not exist already.
-func (t tag) Update(c *app.Context, blogID string, tag string, operation constants.Operation) error {
+func (t tag) Update(c *app.Context, blogID, tag string, operation constants.Operation) error {
 	collection := c.Mongo.DB().Collection("tags")
 
 	res := collection.FindOneAndUpdate(c, bson.D{{Key: "_id", Value: tag}}, bson.M{string(operation): bson.M{"blog_id_list": blogID}})

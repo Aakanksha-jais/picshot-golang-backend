@@ -24,6 +24,7 @@ func getTime(date string) time.Time {
 	return t
 }
 
+//nolint:lll // test cases need to be readable
 func TestBlog_GetAll(t *testing.T) {
 	ctx, blog := initializeTest()
 
@@ -57,27 +58,9 @@ func TestBlog_GetAll(t *testing.T) {
 			page:        &models.Page{Limit: 3, PageNo: 1},
 			err:         nil,
 		},
-		{
-			description: "get all with empty filter and invalid page offset",
-			input:       &models.Blog{},
-			output:      []*models.Blog(nil),
-			page:        &models.Page{Limit: 2, PageNo: 100},
-			err:         nil,
-		},
-		{
-			description: "get all with empty filter and zero page limit",
-			input:       &models.Blog{},
-			output:      getAllOutput(),
-			page:        &models.Page{Limit: 0, PageNo: 1},
-			err:         nil,
-		},
-		{
-			description: "get all with empty filter and empty page",
-			input:       &models.Blog{},
-			output:      getAllOutput(),
-			page:        &models.Page{},
-			err:         nil,
-		},
+		{description: "get all with empty filter and invalid page offset", input: &models.Blog{}, output: []*models.Blog(nil), page: &models.Page{Limit: 2, PageNo: 100}, err: nil},
+		{description: "get all with empty filter and zero page limit", input: &models.Blog{}, output: getAllOutput(), page: &models.Page{Limit: 0, PageNo: 1}, err: nil},
+		{description: "get all with empty filter and empty page", input: &models.Blog{}, output: getAllOutput(), page: &models.Page{}, err: nil},
 		{
 			description: "get all with account id = 2",
 			input:       &models.Blog{AccountID: 2},
@@ -132,12 +115,7 @@ func TestBlog_GetAll_Error(t *testing.T) {
 		page        *models.Page
 		output      []*models.Blog
 		err         error
-	}{
-		description: "get blog with blog id = TEST_ID",
-		input:       &models.Blog{BlogID: "TEST_ID"},
-		page:        &models.Page{Limit: 2, PageNo: 1},
-		err:         errors.DBError{},
-	}
+	}{description: "get blog with blog id = TEST_ID", input: &models.Blog{BlogID: "TEST_ID"}, page: &models.Page{Limit: 2, PageNo: 1}, err: errors.DBError{}}
 
 	output, err := blog.GetAll(ctx, tc.input, tc.page)
 
@@ -146,6 +124,7 @@ func TestBlog_GetAll_Error(t *testing.T) {
 	assert.IsType(t, tc.err, err, "TEST, failed.\n%s", tc.description)
 }
 
+//nolint:lll // test cases need to be readable
 func TestBlog_GetByIDs(t *testing.T) {
 	ctx, blog := initializeTest()
 
@@ -176,12 +155,7 @@ func TestBlog_GetByIDs(t *testing.T) {
 			},
 			err: nil,
 		},
-		{
-			description: "get blogs with non-existing id",
-			input:       []string{"DUMMY_ID_123"},
-			output:      []*models.Blog(nil),
-			err:         nil,
-		},
+		{description: "get blogs with non-existing id", input: []string{"DUMMY_ID_123"}, output: []*models.Blog(nil), err: nil},
 	}
 
 	for i := range tests {
@@ -214,11 +188,7 @@ func TestBlog_GetByIDs_Error(t *testing.T) {
 		input       []string
 		output      []*models.Blog
 		err         error
-	}{
-		description: "get blog with blog id = TEST_ID",
-		input:       []string{"TEST_ID"},
-		err:         errors.DBError{},
-	}
+	}{description: "get blog with blog id = TEST_ID", input: []string{"TEST_ID"}, err: errors.DBError{}}
 
 	output, err := blog.GetByIDs(ctx, tc.input)
 
@@ -239,13 +209,18 @@ func TestBlog_Get(t *testing.T) {
 		{
 			description: "get blog with blog id = MSO8WB2J7X",
 			input:       &models.Blog{BlogID: "MSO8WB2J7X"},
-			output:      &models.Blog{BlogID: "MSO8WB2J7X", AccountID: 3, Title: "books", Summary: "a blog on books", Content: "the subtle art of not giving a fuck- an award winner", Tags: []string{"#markmanson"}, CreatedOn: getTime("2021-02-12T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/book.jpg"}},
+			output: &models.Blog{
+				BlogID:    "MSO8WB2J7X",
+				AccountID: 3,
+				Title:     "books",
+				Summary:   "a blog on books",
+				Content:   "the subtle art of not giving a fuck- an award winner",
+				Tags:      []string{"#markmanson"},
+				CreatedOn: getTime("2021-02-12T15:04:05Z"),
+				Images:    []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/book.jpg"},
+			},
 		},
-		{
-			description: "get blog with non-existing blog id",
-			input:       &models.Blog{BlogID: "DUMMY_ID_123"},
-			err:         errors.DBError{Err: mongo.ErrNoDocuments},
-		},
+		{description: "get blog with non-existing blog id", input: &models.Blog{BlogID: "DUMMY_ID_123"}, err: errors.DBError{Err: mongo.ErrNoDocuments}},
 	}
 
 	for i := range tests {
@@ -274,11 +249,7 @@ func TestBlog_Get_Error(t *testing.T) {
 		input       *models.Blog
 		output      *models.Blog
 		err         error
-	}{
-		description: "get blog with blog id = TEST_ID",
-		input:       &models.Blog{BlogID: "TEST_ID"},
-		err:         errors.DBError{},
-	}
+	}{description: "get blog with blog id = TEST_ID", input: &models.Blog{BlogID: "TEST_ID"}, err: errors.DBError{}}
 
 	output, err := blog.Get(ctx, tc.input)
 
@@ -290,7 +261,16 @@ func TestBlog_Get_Error(t *testing.T) {
 func TestBlog_Create(t *testing.T) {
 	ctx, blog := initializeTest()
 
-	model := &models.Blog{BlogID: "TEST_ID", AccountID: 5, Title: "title", Summary: "summary", Content: "content", Tags: []string{"tag"}, CreatedOn: getTime("2020-09-21T15:04:05Z"), Images: []string{"url"}}
+	model := &models.Blog{
+		BlogID:    "TEST_ID",
+		AccountID: 5,
+		Title:     "title",
+		Summary:   "summary",
+		Content:   "content",
+		Tags:      []string{"tag"},
+		CreatedOn: getTime("2020-09-21T15:04:05Z"),
+		Images:    []string{"url"},
+	}
 
 	tests := []struct {
 		description string
@@ -298,11 +278,7 @@ func TestBlog_Create(t *testing.T) {
 		output      *models.Blog
 		err         error
 	}{
-		{
-			description: "Create Blog with Valid Details.",
-			input:       model,
-			output:      model,
-		},
+		{description: "Create Blog with Valid Details.", input: model, output: model},
 	}
 
 	for i := range tests {
@@ -326,17 +302,44 @@ func TestBlog_Update(t *testing.T) {
 		{
 			description: "valid update on title, tags and images.",
 			input:       &models.Blog{BlogID: "MSO8WB2J7X", Title: "new_title", Tags: []string{"tag1", "tag3"}, Images: []string{"url8"}},
-			output:      &models.Blog{BlogID: "MSO8WB2J7X", AccountID: 3, Title: "new_title", Summary: "a blog on books", Content: "the subtle art of not giving a fuck- an award winner", Tags: []string{"#markmanson", "tag1", "tag3"}, CreatedOn: getTime("2021-02-12T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/book.jpg", "url8"}},
+			output: &models.Blog{
+				BlogID:    "MSO8WB2J7X",
+				AccountID: 3,
+				Title:     "new_title",
+				Summary:   "a blog on books",
+				Content:   "the subtle art of not giving a fuck- an award winner",
+				Tags:      []string{"tag1", "tag3"},
+				CreatedOn: getTime("2021-02-12T15:04:05Z"),
+				Images:    []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/book.jpg", "url8"},
+			},
 		},
 		{
-			description: "valid update on content.",
-			input:       &models.Blog{BlogID: "POQA7B2J7X", Content: "new_content"},
-			output:      &models.Blog{BlogID: "POQA7B2J7X", AccountID: 1, Title: "love", Summary: "a blog on love", Content: "new_content", Tags: []string{"#love", "life", "#trending"}, CreatedOn: getTime("2019-03-16T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/3b6c399e8f5d9d4f54f4d91c6db7cfde.jpg"}},
+			description: "valid update on content and tags.",
+			input:       &models.Blog{BlogID: "POQA7B2J7X", Content: "new_content", Tags: []string{"#love", "life"}},
+			output: &models.Blog{
+				BlogID:    "POQA7B2J7X",
+				AccountID: 1,
+				Title:     "love",
+				Summary:   "a blog on love",
+				Content:   "new_content",
+				Tags:      []string{"#love", "life"},
+				CreatedOn: getTime("2019-03-16T15:04:05Z"),
+				Images:    []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/3b6c399e8f5d9d4f54f4d91c6db7cfde.jpg"},
+			},
 		},
 		{
 			description: "valid update on summary.",
-			input:       &models.Blog{BlogID: "9SH7SH2V37", Summary: "new_summary"},
-			output:      &models.Blog{BlogID: "9SH7SH2V37", AccountID: 2, Title: "memories", Summary: "new_summary", Content: "the best of childhood days!", Tags: []string{"#memories", "#life"}, CreatedOn: getTime("2021-04-08T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/girl.jpeg", "https://picshot-images.s3.ap-south-1.amazonaws.com/kid.jpg"}},
+			input:       &models.Blog{BlogID: "9SH7SH2V37", Summary: "new_summary", Tags: []string{"#memories", "#life"}},
+			output: &models.Blog{
+				BlogID:    "9SH7SH2V37",
+				AccountID: 2,
+				Title:     "memories",
+				Summary:   "new_summary",
+				Content:   "the best of childhood days!",
+				Tags:      []string{"#memories", "#life"},
+				CreatedOn: getTime("2021-04-08T15:04:05Z"),
+				Images:    []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/girl.jpeg", "https://picshot-images.s3.ap-south-1.amazonaws.com/kid.jpg"},
+			},
 		},
 	}
 
@@ -376,6 +379,7 @@ func TestBlog_DeleteBlog(t *testing.T) {
 	}
 }
 
+//nolint:lll // hampers readability
 func getAllOutput() []*models.Blog {
 	return []*models.Blog{
 		{BlogID: "MSI8WKNSH9", AccountID: 2, Title: "music", Summary: "a blog on music", Content: "avicii left :(", Tags: []string{}, CreatedOn: getTime("2021-05-23T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/avicii.jpg"}},

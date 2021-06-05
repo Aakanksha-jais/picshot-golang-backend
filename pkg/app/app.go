@@ -3,7 +3,6 @@ package app
 import (
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/constants"
@@ -152,18 +151,11 @@ func s3Retry(config configs.Config, app *App) {
 
 func (a *App) loadTestData() {
 	if a.Get("LOAD_TEST_DATA") == "YES" {
-		if !strings.EqualFold(a.Get("ENV"), "test") {
-			a.Warnf("environment variable LOAD_TEST_DATA is set to YES: all existing data across all databases will be LOST")
-			a.Warnf("terminate within 5 seconds if this was not intended")
-
-			time.Sleep(5 * time.Second)
-
-			a.Warnf("test data is being loaded now")
-		}
 
 		AddTestData(a.Mongo.DB(), a.SQL.GetDB(), a.S3, a.Logger)
 
 		a.Infof("test data has been loaded: all existing data across all databases is overwritten")
+
 		return
 	}
 

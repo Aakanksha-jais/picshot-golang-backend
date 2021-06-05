@@ -34,11 +34,7 @@ func TestTag_Get(t *testing.T) {
 			input:       "#trending",
 			output:      &models.Tag{Name: "#trending", BlogIDList: []string{"UMS672XR8J", "ABK7SH2V37", "MSI8NS2909", "POQA7B2J7X"}},
 		},
-		{
-			description: "get tag with invalid name",
-			input:       "#abc",
-			err:         errors.DBError{Err: mongo.ErrNoDocuments},
-		},
+		{description: "get tag with invalid name", input: "#abc", err: errors.DBError{Err: mongo.ErrNoDocuments}},
 	}
 
 	for i := range tests {
@@ -67,12 +63,7 @@ func TestTag_Get_Error(t *testing.T) {
 		input       string
 		output      *models.Tag
 		err         error
-	}{
-		description: "get tag: failure case (decode error)",
-		input:       "dummy",
-		output:      nil,
-		err:         errors.DBError{},
-	}
+	}{description: "get tag: failure case (decode error)", input: "dummy", output: nil, err: errors.DBError{}}
 
 	output, err := tag.Get(ctx, tc.input)
 
@@ -141,25 +132,10 @@ func TestTag_Create(t *testing.T) {
 		input       *models.Tag
 		err         error
 	}{
-		{
-			description: "create tag: success case",
-			input:       &models.Tag{Name: "#test_tag", BlogIDList: []string{"TEST_ID"}},
-		},
-		{
-			description: "create tag: failure case (redundant input)",
-			input:       &models.Tag{Name: "#test_tag", BlogIDList: []string{"TEST_ID"}},
-			err:         errors.DBError{},
-		},
-		{
-			description: "create tag: failure case (nil input)",
-			input:       nil,
-			err:         errors.DBError{},
-		},
-		{
-			description: "create empty tag",
-			input:       &models.Tag{},
-			err:         nil,
-		},
+		{description: "create tag: success case", input: &models.Tag{Name: "#test_tag", BlogIDList: []string{"TEST_ID"}}},
+		{description: "create tag: failure case (redundant input)", input: &models.Tag{Name: "#test_tag", BlogIDList: []string{"TEST_ID"}}, err: errors.DBError{}},
+		{description: "create tag: failure case (nil input)", input: nil, err: errors.DBError{}},
+		{description: "create empty tag", input: &models.Tag{}, err: nil},
 	}
 
 	for i := range tests {
