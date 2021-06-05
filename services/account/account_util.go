@@ -21,6 +21,7 @@ func (a account) checkUsernameAvailability(c *app.Context, username string) erro
 	}
 
 	c.Logger.Debugf("username %s available", username)
+
 	return nil
 }
 
@@ -35,6 +36,7 @@ func (a account) checkEmailAvailability(c *app.Context, email string) error {
 	}
 
 	c.Logger.Debugf("email %s available", email)
+
 	return nil
 }
 
@@ -49,6 +51,7 @@ func (a account) checkPhoneAvailability(c *app.Context, phone string) error {
 	}
 
 	c.Logger.Debugf("phone number %s available", phone)
+
 	return nil
 }
 
@@ -71,7 +74,73 @@ func (a account) checkUserExists(c *app.Context, user *models.User) error {
 	return nil
 }
 
-func validateDetails(user *models.User) error {
+func (a account) getUpdate(ctx *app.Context, account *models.Account, user *models.User) (*models.Account, error) {
+	update := &models.Account{}
+
+	if account.UserName != user.UserName {
+		err := validateUsername(user.UserName)
+		if err != nil {
+			return nil, err
+		}
+
+		err = a.CheckAvailability(ctx, &models.User{UserName: user.UserName})
+		if err != nil {
+			return nil, err
+		}
+
+		update.UserName = user.UserName
+	}
+
+	if account.FName != user.FName {
+		err := validateName(user.FName)
+		if err != nil {
+			return nil, err
+		}
+
+		update.FName = user.FName
+	}
+
+	if account.LName != user.LName {
+		err := validateName(user.LName)
+		if err != nil {
+			return nil, err
+		}
+
+		update.LName = user.LName
+	}
+
+	if account.Email.String != user.Email.String {
+		err := validateEmail(user.Email.String)
+		if err != nil {
+			return nil, err
+		}
+
+		err = a.CheckAvailability(ctx, &models.User{Email: user.Email})
+		if err != nil {
+			return nil, err
+		}
+
+		update.Email = user.Email
+	}
+
+	if account.PhoneNo.String != user.PhoneNo.String {
+		err := validatePhone(user.PhoneNo.String)
+		if err != nil {
+			return nil, err
+		}
+
+		err = a.CheckAvailability(ctx, &models.User{PhoneNo: user.PhoneNo})
+		if err != nil {
+			return nil, err
+		}
+
+		update.PhoneNo = user.PhoneNo
+	}
+
+	return update, nil
+}
+
+func validateUser(user *models.User) error {
 	if user.UserName == "" {
 		return errors.MissingParam{Param: "user_name"}
 	}
