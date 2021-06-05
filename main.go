@@ -48,6 +48,7 @@ func main() {
 	app.GET("/browse", blogHandler.Browse)
 	app.POST("/blog", blogHandler.Create)
 	app.GET("/blogs/{blogid}", blogHandler.Get)
+	app.GET("/tags/{tag}", blogHandler.GetAllByTag)
 	app.PUT("/blogs/{blogid}", blogHandler.Update)
 	app.DELETE("/blogs/{blogid}", blogHandler.Delete)
 	app.GET("/{accountid}/blogs", blogHandler.GetBlogsByUser)

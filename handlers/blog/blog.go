@@ -47,6 +47,22 @@ func (b blog) GetAll(ctx *app.Context) (interface{}, error) {
 	return b.service.GetAll(ctx, nil, &models.Page{Limit: int64(limit), PageNo: int64(pageNo)})
 }
 
+func (b blog) GetAllByTag(ctx *app.Context) (interface{}, error) {
+	tag := ctx.Request.PathParam("tag")
+
+	limit, err := strconv.Atoi(ctx.Request.QueryParam("limit"))
+	if err != nil || limit < 0 {
+		return nil, errors.InvalidParam{Param: "limit"}
+	}
+
+	pageNo, err := strconv.Atoi(ctx.Request.QueryParam("pageno"))
+	if err != nil || pageNo < 0 {
+		return nil, errors.InvalidParam{Param: "pageno"}
+	}
+
+	return b.service.GetAllByTagName(ctx, tag, &models.Page{Limit: int64(limit), PageNo: int64(pageNo)})
+}
+
 func (b blog) GetBlogsByUser(ctx *app.Context) (interface{}, error) {
 	accountID := ctx.Request.PathParam("accountid")
 

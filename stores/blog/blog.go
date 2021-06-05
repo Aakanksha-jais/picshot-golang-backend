@@ -58,10 +58,14 @@ func (b blog) GetAll(ctx *app.Context, filter *models.Blog, page *models.Page) (
 }
 
 // GetByIDs retrieves all blogs whose IDs have been provided as parameter.
-func (b blog) GetByIDs(ctx *app.Context, idList []string) ([]*models.Blog, error) {
+func (b blog) GetByIDs(ctx *app.Context, idList []string, page *models.Page) ([]*models.Blog, error) {
 	collection := ctx.Mongo.DB().Collection("blogs")
 
 	opts := options.Find().SetSort(bson.D{{Key: "created_on", Value: -1}})
+
+	if page != nil {
+		opts = opts.SetSkip((page.PageNo - 1) * page.Limit).SetLimit(page.Limit)
+	}
 
 	cursor, err := collection.Find(ctx, bson.M{"_id": bson.M{"$in": idList}}, opts)
 	if err != nil {

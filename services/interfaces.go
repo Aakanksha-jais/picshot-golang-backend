@@ -45,7 +45,7 @@ type Blog interface {
 	GetAll(c *app.Context, filter *models.Blog, page *models.Page) ([]*models.Blog, error)
 
 	// GetAllByTagName retrieves all blogs by tag name.
-	GetAllByTagName(c *app.Context, name string) ([]*models.Blog, error)
+	GetAllByTagName(c *app.Context, name string, page *models.Page) ([]*models.Blog, error)
 
 	// GetByID retrieves a single blog by its id.
 	GetByID(c *app.Context, id string) (*models.Blog, error)

@@ -43,13 +43,13 @@ func (b blog) GetAll(ctx *app.Context, filter *models.Blog, page *models.Page) (
 }
 
 // GetAllByTagName retrieves all blogs by tag input.
-func (b blog) GetAllByTagName(ctx *app.Context, name string) ([]*models.Blog, error) {
-	tag, err := b.tagService.Get(ctx, name)
+func (b blog) GetAllByTagName(ctx *app.Context, name string, page *models.Page) ([]*models.Blog, error) {
+	tag, err := b.tagService.Get(ctx, fmt.Sprintf("#%v", name))
 	if err != nil {
 		return nil, err
 	}
 
-	return b.blogStore.GetByIDs(ctx, tag.BlogIDList)
+	return b.blogStore.GetByIDs(ctx, tag.BlogIDList, page)
 }
 
 // GetByID is used to retrieve a single blog by its id.
