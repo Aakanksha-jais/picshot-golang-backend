@@ -44,7 +44,7 @@ func NewServer(app *App) *server {
 	s.Router.Use(s.contextInjector())
 
 	s.contextPool.New = func() interface{} {
-		return NewContext(nil, app)
+		return NewContext(nil, nil, app)
 	}
 
 	return s
@@ -58,7 +58,7 @@ func (s *server) contextInjector() func(inner http.Handler) http.Handler {
 	return func(inner http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			c := s.contextPool.Get().(*Context)
-			c.reset(NewRequest(r))
+			c.reset(NewRequest(r), w)
 			c.Context = r.Context()
 
 			appContext := context.WithValue(c, appContextKey, c)

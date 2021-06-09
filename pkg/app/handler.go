@@ -24,15 +24,14 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errtype  string
 	)
 
-	if _, ok := data.(func(w http.ResponseWriter)); !ok {
-		errtype = setHeader(w, err)
+	errtype = setHeader(w, err)
+	if errtype == "" {
+		err = nil
 	}
 
 	switch data := data.(type) {
 	case *models.Account:
 		respData = getAccountResponse(data)
-	case func(w http.ResponseWriter):
-		data(w)
 	case *models.User:
 		respData = getUserResponse(data)
 	default:
@@ -100,7 +99,12 @@ func setHeader(w http.ResponseWriter, err error) string {
 		w.WriteHeader(http.StatusUnauthorized)
 		return "auth-error"
 	case errors.Error:
-		w.WriteHeader(http.StatusInternalServerError)
+		if err.Type == "login-error" {
+			w.WriteHeader(http.StatusBadRequest)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
 		return err.Type
 	case errors.EntityAlreadyExists:
 		w.WriteHeader(http.StatusBadRequest)
