@@ -28,3 +28,9 @@ To run the server:
 ```shell
 go run main.go
 ```
+Hit Ctrl+C to stop the server.
+
+To stop the database containers, run the following:
+```shell
+docker-compose down
+```
