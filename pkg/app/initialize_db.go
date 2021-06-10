@@ -18,13 +18,13 @@ import (
 )
 
 func AddTestData(db *mongo.Database, sqlDB *sql.DB, awsS3 AWSS3, logger log.Logger) {
-	InitializeTestBlogCollection(db, logger, "./db")
+	InitializeTestBlogsCollection(db, logger, "./db")
 
 	InitializeTestTagsCollection(db, logger, "./db")
 
 	InitializeTestAccountsTable(sqlDB, logger, "./db")
 
-	InitializeTestAWSBucket(awsS3, os.Getenv("AWS_BUCKET"), logger, "./db")
+	//InitializeTestAWSBucket(awsS3, os.Getenv("AWS_BUCKET"), logger, "./db")
 }
 
 func InitializeTestAWSBucket(awsS3 AWSS3, bucket string, logger log.Logger, directory string) {
@@ -32,7 +32,7 @@ func InitializeTestAWSBucket(awsS3 AWSS3, bucket string, logger log.Logger, dire
 
 	svc := awsS3.Service()
 
-	res, err := svc.ListObjects(&s3.ListObjectsInput{Bucket: aws.String(bucket)})
+	res, _ := svc.ListObjects(&s3.ListObjectsInput{Bucket: aws.String(bucket)})
 	for _, object := range res.Contents {
 		objects = append(objects, &s3.ObjectIdentifier{Key: aws.String(*object.Key)})
 	}
@@ -43,7 +43,7 @@ func InitializeTestAWSBucket(awsS3 AWSS3, bucket string, logger log.Logger, dire
 			Delete: &s3.Delete{Objects: objects},
 		}
 
-		_, err = svc.DeleteObjectsWithContext(context.TODO(), input)
+		_, err := svc.DeleteObjectsWithContext(context.TODO(), input)
 		if err != nil {
 			logger.Errorf("failed to delete objects: %v", err)
 		}
@@ -66,7 +66,7 @@ func InitializeTestAWSBucket(awsS3 AWSS3, bucket string, logger log.Logger, dire
 			return
 		}
 
-		uploader.Upload(&s3manager.UploadInput{
+		_, _ = uploader.Upload(&s3manager.UploadInput{
 			Bucket: aws.String(bucket),
 			Key:    aws.String(file.Name()),
 			Body:   f,
@@ -84,18 +84,16 @@ func InitializeTestAccountsTable(sqlDB *sql.DB, logger log.Logger, directory str
 		return
 	}
 
-	dot.Exec(sqlDB, "drop")
-	dot.Exec(sqlDB, "create")
-	dot.Exec(sqlDB, "use")
-	dot.Exec(sqlDB, "create-table")
-	dot.Exec(sqlDB, "insert-aakanksha")
-	dot.Exec(sqlDB, "insert-mainak")
-	dot.Exec(sqlDB, "insert-divij")
+	_, _ = dot.Exec(sqlDB, "drop")
+	_, _ = dot.Exec(sqlDB, "create")
+	_, _ = dot.Exec(sqlDB, "use")
+	_, _ = dot.Exec(sqlDB, "create-table")
+	_, _ = dot.Exec(sqlDB, "insert-aakanksha")
+	_, _ = dot.Exec(sqlDB, "insert-mainak")
+	_, _ = dot.Exec(sqlDB, "insert-divij")
 }
 
 func InitializeTestTagsCollection(db *mongo.Database, logger log.Logger, directory string) {
-	var data []interface{}
-
 	file := directory + "/test/tags.json"
 
 	bytes, err := ioutil.ReadFile(file)
@@ -104,13 +102,22 @@ func InitializeTestTagsCollection(db *mongo.Database, logger log.Logger, directo
 		return
 	}
 
-	err = json.Unmarshal(bytes, &data)
+	var (
+		data []interface{}
+		tags []models.Tag
+	)
+
+	err = json.Unmarshal(bytes, &tags)
 	if err != nil {
 		logger.Errorf("cannot unmarshal tags: %v", err.Error())
 	}
 
 	collection := db.Collection("tags")
-	collection.Drop(context.TODO())
+	_ = collection.Drop(context.TODO())
+
+	for _, tag := range tags {
+		data = append(data, tag)
+	}
 
 	_, err = collection.InsertMany(context.TODO(), data)
 	if err != nil {
@@ -118,7 +125,8 @@ func InitializeTestTagsCollection(db *mongo.Database, logger log.Logger, directo
 	}
 }
 
-func InitializeTestBlogCollection(db *mongo.Database, logger log.Logger, directory string) {
+//nolint
+func InitializeTestBlogsCollection(db *mongo.Database, logger log.Logger, directory string) {
 	file := directory + "/test/blogs.json"
 
 	bytes, err := ioutil.ReadFile(file)
@@ -138,7 +146,7 @@ func InitializeTestBlogCollection(db *mongo.Database, logger log.Logger, directo
 	}
 
 	collection := db.Collection("blogs")
-	collection.Drop(context.TODO())
+	_ = collection.Drop(context.TODO())
 
 	for _, blog := range blogs {
 		data = append(data, blog)

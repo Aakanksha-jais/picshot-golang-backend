@@ -5,5 +5,9 @@ type DBError struct {
 }
 
 func (e DBError) Error() string {
+	if e.Err == nil {
+		return "database error"
+	}
+
 	return e.Err.Error()
 }

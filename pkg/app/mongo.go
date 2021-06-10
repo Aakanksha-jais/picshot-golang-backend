@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/constants"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -30,7 +31,6 @@ type MongoConfig struct {
 type mongoDB struct {
 	*mongo.Database
 	config *MongoConfig
-	logger log.Logger
 }
 
 func (db mongoDB) DB() *mongo.Database {
@@ -83,8 +83,7 @@ func GetNewMongoDB(logger log.Logger, config configs.Config) (MongoDB, error) {
 
 	clientOptions := options.Client().ApplyURI(connectionString)
 
-	const defaultMongoTimeout = 3
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(defaultMongoTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(constants.DefaultMongoTimeout)*time.Second)
 
 	defer cancel()
 

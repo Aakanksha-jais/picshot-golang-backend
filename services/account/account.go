@@ -64,7 +64,10 @@ func (a account) GetAccountWithBlogs(ctx *app.Context, username string) (*models
 		return nil, errors.EntityNotFound{Entity: "user"}
 	}
 
-	blogs, err := a.blogService.GetAll(ctx, &models.Blog{AccountID: account.ID})
+	blogs, err := a.blogService.GetAll(ctx, &models.Blog{AccountID: account.ID}, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	for i := range blogs {
 		if blogs[i] != nil {
@@ -80,8 +83,6 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 		return nil, errors.MissingParam{Param: "user details"}
 	}
 
-	update := &models.Account{}
-
 	id := ctx.Value(auth.JWTContextKey("user_id"))
 
 	account, err := a.GetByID(ctx, id.(int64))
@@ -89,64 +90,9 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 		return nil, err
 	}
 
-	if account.UserName != user.UserName {
-		err = validateUsername(user.UserName)
-		if err != nil {
-			return nil, err
-		}
-
-		err = a.CheckAvailability(ctx, &models.User{UserName: user.UserName})
-		if err != nil {
-			return nil, err
-		}
-
-		update.UserName = user.UserName
-	}
-
-	if account.FName != user.FName {
-		err = validateName(user.FName)
-		if err != nil {
-			return nil, err
-		}
-
-		update.FName = user.FName
-	}
-
-	if account.LName != user.LName {
-		err = validateName(user.LName)
-		if err != nil {
-			return nil, err
-		}
-
-		update.LName = user.LName
-	}
-
-	if account.Email.String != user.Email.String {
-		err = validateEmail(user.Email.String)
-		if err != nil {
-			return nil, err
-		}
-
-		err = a.CheckAvailability(ctx, &models.User{Email: user.Email})
-		if err != nil {
-			return nil, err
-		}
-
-		update.Email = user.Email
-	}
-
-	if account.PhoneNo.String != user.PhoneNo.String {
-		err = validatePhone(user.PhoneNo.String)
-		if err != nil {
-			return nil, err
-		}
-
-		err = a.CheckAvailability(ctx, &models.User{PhoneNo: user.PhoneNo})
-		if err != nil {
-			return nil, err
-		}
-
-		update.PhoneNo = user.PhoneNo
+	update, err := a.getUpdate(ctx, account, user)
+	if err != nil {
+		return nil, err
 	}
 
 	update.ID = id.(int64)
@@ -184,7 +130,10 @@ func (a account) UpdatePassword(ctx *app.Context, oldPassword, newPassword strin
 		return errors.Error{Err: err, Message: "error in hashing password", Type: "password-hash-error"}
 	}
 
-	_, err = a.accountStore.Update(ctx, &models.Account{User: models.User{ID: id.(int64), Password: string(hash)}, PwdUpdate: sql.NullTime{Time: time.Now(), Valid: true}})
+	_, err = a.accountStore.Update(ctx, &models.Account{
+		User:      models.User{ID: id.(int64), Password: string(hash)},
+		PwdUpdate: sql.NullTime{Time: time.Now(), Valid: true},
+	})
 
 	return err
 }
@@ -210,7 +159,7 @@ func (a account) Create(ctx *app.Context, user *models.User) (*models.Account, e
 	}
 
 	// check if user details are valid
-	err = validateDetails(user)
+	err = validateUser(user)
 	if err != nil {
 		return nil, err
 	}

@@ -5,8 +5,11 @@ import (
 
 	handlerAccount "github.com/Aakanksha-jais/picshot-golang-backend/handlers/account"
 	handlerBlog "github.com/Aakanksha-jais/picshot-golang-backend/handlers/blog"
+
 	serviceAccount "github.com/Aakanksha-jais/picshot-golang-backend/services/account"
 	serviceBlog "github.com/Aakanksha-jais/picshot-golang-backend/services/blog"
+	serviceTag "github.com/Aakanksha-jais/picshot-golang-backend/services/tag"
+
 	storeAccount "github.com/Aakanksha-jais/picshot-golang-backend/stores/account"
 	storeBlog "github.com/Aakanksha-jais/picshot-golang-backend/stores/blog"
 	storeImage "github.com/Aakanksha-jais/picshot-golang-backend/stores/image"
@@ -22,7 +25,8 @@ func main() {
 	accountStore := storeAccount.New()
 	imageStore := storeImage.New()
 
-	blogService := serviceBlog.New(blogStore, tagStore, imageStore)
+	tagService := serviceTag.New(tagStore)
+	blogService := serviceBlog.New(blogStore, tagService, imageStore)
 	accountService := serviceAccount.New(accountStore, blogService)
 
 	blogHandler := handlerBlog.New(blogService)
@@ -40,12 +44,14 @@ func main() {
 	app.DELETE("/myaccount", accountHandler.Delete)
 
 	// Routes for Blogs
-	app.GET("/", blogHandler.GetAll)
+	app.GET("/blogs", blogHandler.GetAll)
 	app.GET("/browse", blogHandler.Browse)
 	app.POST("/blog", blogHandler.Create)
-	app.GET("/blog/{blogid}", blogHandler.Get)
-	app.DELETE("/blog/{blogid}", blogHandler.Delete)
-	app.GET("/{accountid}/blog", blogHandler.GetBlogsByUser)
+	app.GET("/blogs/{blogid}", blogHandler.Get)
+	app.GET("/tags/{tag}", blogHandler.GetAllByTag)
+	app.PUT("/blogs/{blogid}", blogHandler.Update)
+	app.DELETE("/blogs/{blogid}", blogHandler.Delete)
+	app.GET("/{accountid}/blogs", blogHandler.GetBlogsByUser)
 
 	app.Start()
 }

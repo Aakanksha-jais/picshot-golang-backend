@@ -1,4 +1,4 @@
-package blog
+package tag
 
 import (
 	"os"
@@ -9,7 +9,7 @@ import (
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 )
 
-//nolint
+// nolint:gochecknoglobals //global var needed for tests
 var a *app.App
 
 func TestMain(m *testing.M) {

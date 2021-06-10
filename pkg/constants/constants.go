@@ -1,5 +1,12 @@
 package constants
 
+type Operation string
+
 const (
-	CreateSuccess = 1
+	MaxRetries          = 20
+	RetryDuration       = 10
+	DefaultMongoTimeout = 20
+
+	Add    Operation = "$push"
+	Remove Operation = "$pull"
 )

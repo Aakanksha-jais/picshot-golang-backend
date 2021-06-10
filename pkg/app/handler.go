@@ -24,15 +24,14 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		errtype  string
 	)
 
-	if _, ok := data.(func(w http.ResponseWriter)); !ok {
-		errtype = setHeader(w, err)
+	errtype = setHeader(w, err)
+	if errtype == "" {
+		err = nil
 	}
 
-	switch data.(type) {
+	switch data := data.(type) {
 	case *models.Account:
 		respData = getAccountResponse(data)
-	case func(w http.ResponseWriter):
-		data.(func(w http.ResponseWriter))(w)
 	case *models.User:
 		respData = getUserResponse(data)
 	default:
@@ -54,6 +53,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Msg  string `json:"msg,omitempty"`
 			Type string `json:"type,omitempty"`
 		}
+
 		resp = struct {
 			Status string    `json:"status"`
 			Err    respError `json:"error"`
@@ -80,7 +80,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func setHeader(w http.ResponseWriter, err error) string {
-	switch err.(type) {
+	switch err := err.(type) {
 	case nil:
 		w.WriteHeader(http.StatusOK)
 	case errors.DBError:
@@ -99,8 +99,13 @@ func setHeader(w http.ResponseWriter, err error) string {
 		w.WriteHeader(http.StatusUnauthorized)
 		return "auth-error"
 	case errors.Error:
-		w.WriteHeader(http.StatusInternalServerError)
-		return err.(errors.Error).Type
+		if err.Type == "login-error" {
+			w.WriteHeader(http.StatusBadRequest)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		return err.Type
 	case errors.EntityAlreadyExists:
 		w.WriteHeader(http.StatusBadRequest)
 		return "entity-already-exists"
@@ -148,6 +153,7 @@ func getUserResponse(data interface{}) userResp {
 	if user.PhoneNo.String != "" {
 		u.PhoneNo = &user.PhoneNo.String
 	}
+
 	return u
 }
 
@@ -195,5 +201,6 @@ func getAccountResponse(data interface{}) accountResp {
 	if account.DelRequest.Valid {
 		a.DelRequest = &account.DelRequest.Time
 	}
+
 	return a
 }

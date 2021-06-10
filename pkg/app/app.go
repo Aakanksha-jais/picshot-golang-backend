@@ -3,8 +3,9 @@ package app
 import (
 	"net/http"
 	"os"
-	"strings"
 	"time"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/constants"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
@@ -80,26 +81,23 @@ func (a *App) initializeStores(config configs.Config) {
 
 	a.Mongo, err = GetNewMongoDB(a.Logger, config)
 	if err != nil {
-		go mongoRetry(nil, a)
+		go mongoRetry(config, a)
 	}
 
 	a.SQL, err = GetNewSQLClient(a.Logger, config)
 	if err != nil {
-		go sqlRetry(nil, a)
+		go sqlRetry(config, a)
 	}
 
 	a.S3, err = GetNewS3(a.Logger, config)
 	if err != nil {
-		go s3Retry(nil, a)
+		go s3Retry(config, a)
 	}
 }
 
-const maxRetries = 1
-const retryDuration = 3
-
 func mongoRetry(config configs.Config, app *App) {
-	for i := 0; i < maxRetries; i++ {
-		time.Sleep(time.Duration(retryDuration) * time.Second)
+	for i := 0; i < constants.MaxRetries; i++ {
+		time.Sleep(time.Duration(constants.RetryDuration) * time.Second)
 
 		app.Debug("retrying mongo connection")
 
@@ -116,8 +114,8 @@ func mongoRetry(config configs.Config, app *App) {
 }
 
 func sqlRetry(config configs.Config, app *App) {
-	for i := 0; i < maxRetries; i++ {
-		time.Sleep(time.Duration(retryDuration) * time.Second)
+	for i := 0; i < constants.MaxRetries; i++ {
+		time.Sleep(time.Duration(constants.RetryDuration) * time.Second)
 
 		app.Debug("retrying sql connection")
 
@@ -134,8 +132,8 @@ func sqlRetry(config configs.Config, app *App) {
 }
 
 func s3Retry(config configs.Config, app *App) {
-	for i := 0; i < maxRetries; i++ {
-		time.Sleep(time.Duration(retryDuration) * time.Second)
+	for i := 0; i < constants.MaxRetries; i++ {
+		time.Sleep(time.Duration(constants.RetryDuration) * time.Second)
 
 		app.Debug("retrying s3 session creation")
 
@@ -153,18 +151,11 @@ func s3Retry(config configs.Config, app *App) {
 
 func (a *App) loadTestData() {
 	if a.Get("LOAD_TEST_DATA") == "YES" {
-		if !strings.EqualFold(a.Get("ENV"), "test") {
-			a.Warnf("environment variable LOAD_TEST_DATA is set to YES: all existing data across all databases will be LOST")
-			a.Warnf("terminate within 5 seconds if this was not intended")
-
-			time.Sleep(5 * time.Second)
-
-			a.Warnf("test data is being loaded now")
-		}
 
 		AddTestData(a.Mongo.DB(), a.SQL.GetDB(), a.S3, a.Logger)
 
 		a.Infof("test data has been loaded: all existing data across all databases is overwritten")
+
 		return
 	}
 

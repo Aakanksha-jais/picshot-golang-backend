@@ -1,8 +1,6 @@
 package blog
 
 import (
-	"reflect"
-
 	"github.com/Aakanksha-jais/picshot-golang-backend/stores"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
@@ -24,10 +22,14 @@ func New() stores.Blog {
 
 // GetAll is used to retrieve all blogs that match the filter.
 // BLogs can be filtered by account_id, blog_id and title.
-func (b blog) GetAll(ctx *app.Context, filter *models.Blog) ([]*models.Blog, error) {
+func (b blog) GetAll(ctx *app.Context, filter *models.Blog, page *models.Page) ([]*models.Blog, error) {
 	collection := ctx.Mongo.DB().Collection("blogs")
 
-	opts := options.Find().SetSort(bson.D{{Key: "_id", Value: -1}}) // retrieve the blogs in reverse chronological order
+	opts := options.Find().SetSort(bson.D{{Key: "created_on", Value: -1}}) // retrieve the blogs in reverse chronological order
+
+	if page != nil {
+		opts = opts.SetSkip((page.PageNo - 1) * page.Limit).SetLimit(page.Limit)
+	}
 
 	cursor, err := collection.Find(ctx, filter.GetFilter(), opts)
 	if err != nil {
@@ -39,7 +41,7 @@ func (b blog) GetAll(ctx *app.Context, filter *models.Blog) ([]*models.Blog, err
 	for cursor.Next(ctx) {
 		var blog models.Blog
 
-		err := cursor.Decode(&blog)
+		err = cursor.Decode(&blog)
 		if err != nil {
 			return nil, errors.DBError{Err: err}
 		}
@@ -56,10 +58,16 @@ func (b blog) GetAll(ctx *app.Context, filter *models.Blog) ([]*models.Blog, err
 }
 
 // GetByIDs retrieves all blogs whose IDs have been provided as parameter.
-func (b blog) GetByIDs(ctx *app.Context, idList []string) ([]*models.Blog, error) {
+func (b blog) GetByIDs(ctx *app.Context, idList []string, page *models.Page) ([]*models.Blog, error) {
 	collection := ctx.Mongo.DB().Collection("blogs")
 
-	cursor, err := collection.Find(ctx, bson.M{"_id": bson.M{"$in": idList}})
+	opts := options.Find().SetSort(bson.D{{Key: "created_on", Value: -1}})
+
+	if page != nil {
+		opts = opts.SetSkip((page.PageNo - 1) * page.Limit).SetLimit(page.Limit)
+	}
+
+	cursor, err := collection.Find(ctx, bson.M{"_id": bson.M{"$in": idList}}, opts)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -69,7 +77,7 @@ func (b blog) GetByIDs(ctx *app.Context, idList []string) ([]*models.Blog, error
 	for cursor.Next(ctx) {
 		var blog models.Blog
 
-		err := cursor.Decode(&blog)
+		err = cursor.Decode(&blog)
 		if err != nil {
 			return nil, errors.DBError{Err: err}
 		}
@@ -101,7 +109,7 @@ func (b blog) Get(ctx *app.Context, filter *models.Blog) (*models.Blog, error) {
 	err := res.Err()
 	switch err {
 	case mongo.ErrNoDocuments:
-		return nil, errors.DBError{Err: err} //todo change in service layer
+		return nil, errors.DBError{Err: err} // todo change in service layer
 	case nil:
 		err = res.Decode(&blog)
 		if err != nil {
@@ -117,7 +125,7 @@ func (b blog) Get(ctx *app.Context, filter *models.Blog) (*models.Blog, error) {
 // Create is used to create a new blog.
 func (b blog) Create(ctx *app.Context, model *models.Blog) (*models.Blog, error) {
 	if model == nil {
-		return nil, nil //todo
+		return nil, nil
 	}
 
 	collection := ctx.Mongo.DB().Collection("blogs")
@@ -140,21 +148,30 @@ func (b blog) Update(ctx *app.Context, model *models.Blog) (*models.Blog, error)
 
 	collection := ctx.Mongo.DB().Collection("blogs")
 
-	res := collection.FindOneAndUpdate(ctx, bson.M{"_id": model.BlogID}, generateFilter(*model))
+	res := collection.FindOneAndUpdate(ctx, bson.M{"_id": model.BlogID}, generateFilter(model))
 
 	if err := res.Err(); err != nil {
 		return nil, errors.DBError{Err: err}
 	}
 
-	if !reflect.DeepEqual(model.Images, []string(nil)) {
+	// if new images are added
+	if len(model.Images) != 0 {
+		// push them to the array
 		r := collection.FindOneAndUpdate(ctx, bson.M{"_id": model.BlogID}, bson.M{"$push": bson.M{"images": bson.M{"$each": model.Images}}})
 		if err := r.Err(); err != nil {
 			return nil, errors.DBError{Err: err}
 		}
 	}
 
-	if !reflect.DeepEqual(model.Tags, []string(nil)) {
-		r := collection.FindOneAndUpdate(ctx, bson.M{"_id": model.BlogID}, bson.M{"$push": bson.M{"tags": bson.M{"$each": model.Tags}}})
+	// remove all existing tags
+	r := collection.FindOneAndUpdate(ctx, bson.M{"_id": model.BlogID}, bson.M{"$unset": bson.M{"tags": ""}})
+	if err := r.Err(); err != nil {
+		return nil, errors.DBError{Err: err}
+	}
+
+	// add new tags
+	if len(model.Tags) != 0 {
+		r = collection.FindOneAndUpdate(ctx, bson.M{"_id": model.BlogID}, bson.M{"$push": bson.M{"tags": bson.M{"$each": model.Tags}}})
 		if err := r.Err(); err != nil {
 			return nil, errors.DBError{Err: err}
 		}
@@ -163,7 +180,7 @@ func (b blog) Update(ctx *app.Context, model *models.Blog) (*models.Blog, error)
 	return b.Get(ctx, &models.Blog{BlogID: model.BlogID})
 }
 
-func generateFilter(model models.Blog) bson.M {
+func generateFilter(model *models.Blog) bson.M {
 	update := bson.M{}
 	if model.Title != "" {
 		update["title"] = model.Title

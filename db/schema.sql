@@ -19,3 +19,4 @@ CREATE TABLE `accounts` (
 
 -- run the following commands from project root:
 -- sudo mysql -u root < db/schema.sql
+-- docker exec -it mysql-container mysql -u admin -padmin123

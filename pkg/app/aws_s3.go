@@ -16,7 +16,7 @@ type AWSS3 interface {
 type awsS3 struct {
 	*s3.S3
 	session *session.Session
-	config  *S3Config
+	config  *aws.Config
 }
 
 func (a awsS3) Service() *s3.S3 {
@@ -25,10 +25,6 @@ func (a awsS3) Service() *s3.S3 {
 
 func (a awsS3) Session() *session.Session {
 	return a.session
-}
-
-type S3Config struct {
-	Region string
 }
 
 func GetNewS3(logger log.Logger, config configs.Config) (AWSS3, error) {
@@ -47,5 +43,5 @@ func GetNewS3(logger log.Logger, config configs.Config) (AWSS3, error) {
 
 	svc := s3.New(sess)
 
-	return awsS3{S3: svc, session: sess}, nil
+	return awsS3{S3: svc, session: sess, config: awsConfigs}, nil
 }

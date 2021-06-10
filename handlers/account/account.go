@@ -2,7 +2,6 @@ package account
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -26,7 +25,12 @@ func New(service services.Account) handlers.Account {
 }
 
 func (a account) Login(ctx *app.Context) (interface{}, error) {
-	exp := time.Now().Add(30 * 24 * time.Hour) //30 days for test
+	err := ctx.CheckAuthHeader()
+	if err != nil {
+		return nil, err
+	}
+
+	exp := time.Now().Add(24 * time.Hour)
 
 	user, err := ctx.Request.UnmarshalUser()
 	if err != nil {
@@ -38,21 +42,27 @@ func (a account) Login(ctx *app.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	token, err := auth.CreateToken(auth.NewClaim(exp.Unix(), account.ID))
+	ctx.Claims = auth.New(exp.Unix(), account.ID)
+
+	token, err := ctx.Claims.CreateToken()
 	if err != nil {
 		return nil, err
 	}
 
 	ctx.Debugf("token generated successfully \033[32m[expires at: %v]\033[0m", exp.Format(time.RFC850))
 
-	return func(w http.ResponseWriter) {
-		w.Header().Add("Authorization", fmt.Sprintf("Bearer %s", token))
-		w.WriteHeader(http.StatusOK)
-	}, nil
+	ctx.SetAuthHeader(token)
+
+	return &account.User, ctx.SetStatus(http.StatusOK)
 }
 
 func (a account) Signup(ctx *app.Context) (interface{}, error) {
-	exp := time.Now().Add(30 * 24 * time.Hour)
+	err := ctx.CheckAuthHeader()
+	if err != nil {
+		return nil, err
+	}
+
+	exp := time.Now().Add(24 * time.Hour)
 
 	user, err := ctx.Request.UnmarshalUser()
 	if err != nil {
@@ -66,24 +76,24 @@ func (a account) Signup(ctx *app.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	token, err := auth.CreateToken(auth.NewClaim(exp.Unix(), account.ID))
+	ctx.Claims = auth.New(exp.Unix(), account.ID)
+
+	token, err := ctx.Claims.CreateToken()
 	if err != nil {
 		return nil, err
 	}
 
 	ctx.Debugf("token generated successfully \033[32m[expires at: %v]\033[0m", exp.Format(time.RFC850))
 
-	return func(w http.ResponseWriter) {
-		w.Header().Add("Authorization", fmt.Sprintf("Bearer %s", token))
-		w.WriteHeader(http.StatusCreated)
-	}, nil
+	ctx.SetAuthHeader(token)
+
+	return &account.User, ctx.SetStatus(http.StatusCreated)
 }
 
 func (a account) Logout(ctx *app.Context) (interface{}, error) { //todo invalidate the auth token
-	return func(w http.ResponseWriter) {
-		w.Header().Add("Authorization", fmt.Sprintf("Bearer %s", ""))
-		w.WriteHeader(http.StatusOK)
-	}, nil
+	ctx.SetAuthHeader("")
+
+	return nil, ctx.SetStatus(http.StatusOK)
 }
 
 func (a account) Get(ctx *app.Context) (interface{}, error) {

@@ -34,7 +34,33 @@ func New(service services.Blog) handlers.Blog {
 }
 
 func (b blog) GetAll(ctx *app.Context) (interface{}, error) {
-	return b.service.GetAll(ctx, nil)
+	limit, err := strconv.Atoi(ctx.Request.QueryParam("limit"))
+	if err != nil || limit < 0 {
+		return nil, errors.InvalidParam{Param: "limit"}
+	}
+
+	pageNo, err := strconv.Atoi(ctx.Request.QueryParam("pageno"))
+	if err != nil || pageNo < 0 {
+		return nil, errors.InvalidParam{Param: "pageno"}
+	}
+
+	return b.service.GetAll(ctx, nil, &models.Page{Limit: int64(limit), PageNo: int64(pageNo)})
+}
+
+func (b blog) GetAllByTag(ctx *app.Context) (interface{}, error) {
+	tag := ctx.Request.PathParam("tag")
+
+	limit, err := strconv.Atoi(ctx.Request.QueryParam("limit"))
+	if err != nil || limit < 0 {
+		return nil, errors.InvalidParam{Param: "limit"}
+	}
+
+	pageNo, err := strconv.Atoi(ctx.Request.QueryParam("pageno"))
+	if err != nil || pageNo < 0 {
+		return nil, errors.InvalidParam{Param: "pageno"}
+	}
+
+	return b.service.GetAllByTagName(ctx, tag, &models.Page{Limit: int64(limit), PageNo: int64(pageNo)})
 }
 
 func (b blog) GetBlogsByUser(ctx *app.Context) (interface{}, error) {
@@ -49,7 +75,7 @@ func (b blog) GetBlogsByUser(ctx *app.Context) (interface{}, error) {
 		return nil, errors.InvalidParam{Param: "account ID"}
 	}
 
-	return b.service.GetAll(ctx, &models.Blog{AccountID: int64(id)})
+	return b.service.GetAll(ctx, &models.Blog{AccountID: int64(id)}, nil)
 }
 
 func (b blog) Get(ctx *app.Context) (interface{}, error) {
@@ -69,4 +95,24 @@ func (b blog) Create(ctx *app.Context) (interface{}, error) {
 	}
 
 	return b.service.Create(ctx, blog, fileHeaders)
+}
+
+func (b blog) Update(ctx *app.Context) (interface{}, error) {
+	fileHeaders := ctx.Request.ParseImages()
+
+	tags := make([]string, 0)
+
+	for _, tag := range strings.Split(ctx.Request.FormValue("tags"), ",") {
+		tags = append(tags, strings.TrimSpace(tag))
+	}
+
+	blog := &models.Blog{
+		BlogID:  ctx.Request.PathParam("blogid"),
+		Title:   ctx.Request.FormValue("title"),
+		Summary: ctx.Request.FormValue("summary"),
+		Content: ctx.Request.FormValue("content"),
+		Tags:    tags,
+	}
+
+	return b.service.Update(ctx, blog, fileHeaders)
 }
