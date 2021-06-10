@@ -23,7 +23,7 @@ func initializeTest(t *testing.T) (*stores.MockBlog, *services.MockTag, *stores.
 	mockTagService := services.NewMockTag(ctrl)
 	mockBlogService := New(mockBlogStore, mockTagService, mockImageStore)
 
-	ctx := app.NewContext(nil, &app.App{Logger: log.NewLogger()})
+	ctx := app.NewContext(nil, nil, &app.App{Logger: log.NewLogger()})
 
 	return mockBlogStore, mockTagService, mockImageStore, ctx, mockBlogService
 }
