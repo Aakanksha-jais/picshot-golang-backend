@@ -151,9 +151,7 @@ func s3Retry(config configs.Config, app *App) {
 
 func (a *App) loadTestData() {
 	if a.Get("LOAD_TEST_DATA") == "YES" {
-
 		AddTestData(a.Mongo.DB(), a.SQL.GetDB(), a.S3, a.Logger)
-
 		a.Infof("test data has been loaded: all existing data across all databases is overwritten")
 
 		return

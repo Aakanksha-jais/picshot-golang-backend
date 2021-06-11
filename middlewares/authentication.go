@@ -21,15 +21,17 @@ func Authentication(logger log.Logger, claims auth.Claims) func(inner http.Handl
 				return
 			}
 
-			authHeader := strings.Split(r.Header.Get("Authorization"), " ")
-			if len(authHeader) != headerLength {
-				logger.Errorf("cannot fetch auth-token (invalid auth-header): %v", authHeader)
+			authHeader := r.Header.Get("Authorization")
+			fields := strings.Fields(authHeader)
+
+			if len(fields) != headerLength {
+				logger.Errorf("cannot fetch auth-token (invalid auth-header): %v", fields)
 				w.WriteHeader(http.StatusUnauthorized)
 
 				return
 			}
 
-			jwtToken := authHeader[1]
+			jwtToken := fields[1]
 
 			err := claims.ParseToken(jwtToken)
 			if err != nil {
