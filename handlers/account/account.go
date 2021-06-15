@@ -3,7 +3,6 @@ package account
 import (
 	"database/sql"
 	"net/http"
-	"time"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/handlers"
 
@@ -25,13 +24,6 @@ func New(service services.Account) handlers.Account {
 }
 
 func (a account) Login(ctx *app.Context) (interface{}, error) {
-	err := ctx.CheckAuthHeader()
-	if err != nil {
-		return nil, err
-	}
-
-	exp := time.Now().Add(24 * time.Hour)
-
 	user, err := ctx.Request.UnmarshalUser()
 	if err != nil {
 		return nil, err
@@ -42,14 +34,12 @@ func (a account) Login(ctx *app.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	ctx.Claims = auth.New(exp.Unix(), account.ID)
-
-	token, err := ctx.Claims.CreateToken()
+	token, err := auth.CreateToken(account.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx.Debugf("token generated successfully \033[32m[expires at: %v]\033[0m", exp.Format(time.RFC850))
+	ctx.Debugf("token generated successfully")
 
 	ctx.SetAuthHeader(token)
 
@@ -57,13 +47,6 @@ func (a account) Login(ctx *app.Context) (interface{}, error) {
 }
 
 func (a account) Signup(ctx *app.Context) (interface{}, error) {
-	err := ctx.CheckAuthHeader()
-	if err != nil {
-		return nil, err
-	}
-
-	exp := time.Now().Add(24 * time.Hour)
-
 	user, err := ctx.Request.UnmarshalUser()
 	if err != nil {
 		return nil, err
@@ -76,14 +59,12 @@ func (a account) Signup(ctx *app.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	ctx.Claims = auth.New(exp.Unix(), account.ID)
-
-	token, err := ctx.Claims.CreateToken()
+	token, err := auth.CreateToken(account.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx.Debugf("token generated successfully \033[32m[expires at: %v]\033[0m", exp.Format(time.RFC850))
+	ctx.Debugf("token generated successfully")
 
 	ctx.SetAuthHeader(token)
 
@@ -97,11 +78,12 @@ func (a account) Logout(ctx *app.Context) (interface{}, error) { //todo invalida
 }
 
 func (a account) Get(ctx *app.Context) (interface{}, error) {
-	id := ctx.Value(auth.JWTContextKey("user_id"))
+	jwtIDKey := auth.JWTContextKey("claims")
+	id := ctx.Value(jwtIDKey).(*auth.Claims).UserID
 
 	ctx.Debugf("user with id: %v is logged in", id)
 
-	return a.service.GetByID(ctx, id.(int64))
+	return a.service.GetByID(ctx, id)
 }
 
 func (a account) GetUser(ctx *app.Context) (interface{}, error) {
@@ -149,4 +131,20 @@ func (a account) CheckAvailability(ctx *app.Context) (interface{}, error) {
 	phone := ctx.Request.QueryParam("phone")
 
 	return nil, a.service.CheckAvailability(ctx, &models.User{UserName: username, PhoneNo: sql.NullString{String: phone, Valid: true}, Email: sql.NullString{String: email, Valid: true}})
+}
+
+func (a account) JWKSEndpoint(_ *app.Context) (interface{}, error) {
+	return auth.JWKS{
+		Keys: []auth.JWK{
+			{
+				ID:             "lVHu/0QjmU/ZFq8oxD9KYnDt6NA=",
+				Algorithm:      "RS256",
+				Type:           "RSA",
+				Use:            "sig",
+				Operations:     []string{"verify"},
+				Modulus:        "hUtynIfJOCeZTFBO77Yh3JznOWKbgBpTglbWMhuPWZElz2BO_G9hqomTFnCkEfMQzTbGgeu2yZskfXcn5yO0vJ1RzCIcHe77mKh1iIGQ1AjgM1t7vUkiyQmf3IK0CH-UPbsMgPi98jSZ_cEs_iEzLrizG47vuO8xo1hbKNDI9WldqUIqHVz9YZZEOTm7aClLx1bkBqHyosnbq_oUDViWEavpwzsOkq02Fvcm5KblxYlgSyigDnxaA3V_nOtdpQSzSibbYYbIcxqYCIF-iJvOi0COj5irWvM0oNvI9YzAxmyNNt132dbeKn8SYmjukif2CiPICmgoOKB8hEfZ7DLU-Hrd4jMG_pJT87M8jQymK0nE6j-w1fA_HsmBLdb0Xfrrbxpe3JydP_XXK_1-50K9A8wmZaJTslgrlVOG5Iy6K_QXIHmQuwSZpcxPmmVx3L75quPFnuAAY89dUbT60EalyB88ZFvPMllyPdFVotYHJayVO0kZHh4ep4qsYBuOYL5X3HVzW8afhYgZ3E11AwCrbxy9JgSyhXaMMu8i6w33o7ZNVqMX-woLQO-X_IONX4xTn-9Qu0jOs9UthkfBXISp6BKq5kcRJ5wMd0jUfV8d6E7IsKGRKRBSN6-_WbsJoyguu9i4OEetTc-RsVGP1InfBERLODKQ5d7mcW6RkkD23Es",
+				PublicExponent: "AQAB",
+			},
+		},
+	}, nil
 }
