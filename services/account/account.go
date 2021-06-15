@@ -83,9 +83,10 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 		return nil, errors.MissingParam{Param: "user details"}
 	}
 
-	id := ctx.Value(auth.JWTContextKey("user_id"))
+	jwtIDKey := auth.JWTContextKey("claims")
+	id := ctx.Value(jwtIDKey).(*auth.Claims).UserID
 
-	account, err := a.GetByID(ctx, id.(int64))
+	account, err := a.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +96,7 @@ func (a account) UpdateUser(ctx *app.Context, user *models.User) (*models.Accoun
 		return nil, err
 	}
 
-	update.ID = id.(int64)
+	update.ID = id
 
 	return a.accountStore.Update(ctx, update)
 }
@@ -108,16 +109,17 @@ func (a account) Update(ctx *app.Context, model *models.Account, id int64) (*mod
 }
 
 func (a account) UpdatePassword(ctx *app.Context, oldPassword, newPassword string) error {
-	id := ctx.Value(auth.JWTContextKey("user_id"))
+	jwtIDKey := auth.JWTContextKey("claims")
+	id := ctx.Value(jwtIDKey).(*auth.Claims).UserID
 
-	account, err := a.accountStore.Get(ctx, &models.Account{User: models.User{ID: id.(int64)}})
+	account, err := a.accountStore.Get(ctx, &models.Account{User: models.User{ID: id}})
 	if err != nil {
 		return err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(oldPassword))
 	if err != nil {
-		return errors.AuthError{Err: err, Message: "invalid password"}
+		return errors.AuthError{Err: err, Msg: "invalid password"}
 	}
 
 	err = validatePassword(newPassword)
@@ -127,11 +129,11 @@ func (a account) UpdatePassword(ctx *app.Context, oldPassword, newPassword strin
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
-		return errors.Error{Err: err, Message: "error in hashing password", Type: "password-hash-error"}
+		return errors.Error{Err: err, Msg: "error in hashing password", Type: "password-hash-error"}
 	}
 
 	_, err = a.accountStore.Update(ctx, &models.Account{
-		User:      models.User{ID: id.(int64), Password: string(hash)},
+		User:      models.User{ID: id, Password: string(hash)},
 		PwdUpdate: sql.NullTime{Time: time.Now(), Valid: true},
 	})
 
@@ -141,9 +143,10 @@ func (a account) UpdatePassword(ctx *app.Context, oldPassword, newPassword strin
 // Delete deactivates an account and updates it's deletion request.
 // After 30 days, the account gets deleted if the status remains inactive.
 func (a account) Delete(ctx *app.Context) error { // TODO: trigger a cronjob for 30 days deletion functionality
-	id := ctx.Value(auth.JWTContextKey("user_id"))
+	jwtIDKey := auth.JWTContextKey("claims")
+	id := ctx.Value(jwtIDKey).(*auth.Claims).UserID
 
-	return a.accountStore.Delete(ctx, id.(int64))
+	return a.accountStore.Delete(ctx, id)
 }
 
 // Create creates an account and assigns an id to it.
@@ -168,7 +171,7 @@ func (a account) Create(ctx *app.Context, user *models.User) (*models.Account, e
 
 	password, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, errors.Error{Err: err, Message: "error in hashing password", Type: "password-hash-error"}
+		return nil, errors.Error{Err: err, Msg: "error in hashing password", Type: "password-hash-error"}
 	}
 
 	account.Password = string(password)
@@ -245,7 +248,7 @@ func (a account) Login(ctx *app.Context, user *models.User) (*models.Account, er
 
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(user.Password))
 	if err != nil {
-		return nil, errors.AuthError{Err: err, Message: "invalid password"}
+		return nil, errors.AuthError{Err: err, Msg: "invalid password"}
 	}
 
 	return a.Update(ctx, &models.Account{DelRequest: sql.NullTime{}, Status: "ACTIVE"}, account.ID)
