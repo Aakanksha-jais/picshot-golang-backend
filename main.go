@@ -32,6 +32,9 @@ func main() {
 	blogHandler := handlerBlog.New(blogService)
 	accountHandler := handlerAccount.New(accountService)
 
+	// JWKS Endpoint
+	app.POST("/.well-known/jwks.json", accountHandler.JWKSEndpoint)
+
 	// Routes for Accounts
 	app.POST("/login", accountHandler.Login)
 	app.POST("/signup", accountHandler.Signup)
