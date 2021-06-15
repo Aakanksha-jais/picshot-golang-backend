@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
@@ -25,6 +27,9 @@ func WriteResponse(w http.ResponseWriter, err error, data interface{}, logger lo
 	}
 
 	switch data := data.(type) {
+	case auth.JWKS:
+		setResponse(w, nil, data, logger)
+		return
 	case *models.Account:
 		respData = getAccountResponse(data)
 	case *models.User:
@@ -63,6 +68,10 @@ func WriteResponse(w http.ResponseWriter, err error, data interface{}, logger lo
 		logger.Error(err)
 	}
 
+	setResponse(w, err, resp, logger)
+}
+
+func setResponse(w http.ResponseWriter, err error, resp interface{}, logger log.Logger) {
 	response, err := json.Marshal(resp)
 	if err != nil {
 		logger.Error(err)

@@ -59,5 +59,5 @@ func exemptPath(oAuth *auth.OAuth, req *http.Request) (error, bool) {
 		return errors.Error{Type: "login-error", Msg: "logout before logging in"}, false
 	}
 
-	return nil, strings.HasSuffix(url, "/available")
+	return nil, strings.HasSuffix(url, "/available") || strings.HasSuffix(url, "/.well-known/jwks.json")
 }
