@@ -24,6 +24,7 @@ func CreateToken(userID int64) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, newClaims(userID))
+	token.Header["kid"] = "lVHu/0QjmU/ZFq8oxD9KYnDt6NA="
 
 	signedToken, err := token.SignedString(key)
 	if err != nil {

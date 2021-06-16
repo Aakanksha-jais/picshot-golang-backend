@@ -66,7 +66,7 @@ func (o *OAuth) Validate(r *http.Request) (*jwt.Token, error) {
 				return nil, errors.AuthError{Msg: "invalid signing algorithm"}
 			}
 
-			return pKey, nil
+			return &pKey, nil
 		},
 	)
 
