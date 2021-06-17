@@ -24,7 +24,7 @@ func New() stores.Image {
 }
 
 func (i image) Upload(ctx *app.Context, fileHeader *multipart.FileHeader, name string) error {
-	svc := ctx.S3.Service()
+	svc := ctx.S3
 
 	size := fileHeader.Size
 
@@ -64,7 +64,7 @@ func (i image) Upload(ctx *app.Context, fileHeader *multipart.FileHeader, name s
 }
 
 func (i image) DeleteBulk(ctx *app.Context, names []string) error {
-	svc := ctx.S3.Service()
+	svc := ctx.S3
 
 	objects := make([]*s3.ObjectIdentifier, 0)
 

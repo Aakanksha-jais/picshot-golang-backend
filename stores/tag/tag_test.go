@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/test"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/constants"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
@@ -16,7 +18,7 @@ import (
 )
 
 func initializeTest() (*app.Context, stores.Tag) {
-	app.InitializeTestTagsCollection(a.Mongo.DB(), a.Logger, "../../db")
+	test.InitializeTestTagsCollection(a.Mongo.DB(), a.Logger, "../../db")
 	return &app.Context{Context: context.TODO(), App: a}, New()
 }
 

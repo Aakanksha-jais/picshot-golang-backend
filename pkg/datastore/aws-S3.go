@@ -1,4 +1,4 @@
-package app
+package datastore
 
 import (
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
@@ -8,23 +8,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-type AWSS3 interface {
-	Service() *s3.S3
-	Session() *session.Session
-}
-
-type awsS3 struct {
+type AWSS3 struct {
 	*s3.S3
-	session *session.Session
+	Session *session.Session
 	config  *aws.Config
-}
-
-func (a awsS3) Service() *s3.S3 {
-	return a.S3
-}
-
-func (a awsS3) Session() *session.Session {
-	return a.session
 }
 
 func GetNewS3(logger log.Logger, config configs.Config) (AWSS3, error) {
@@ -36,12 +23,12 @@ func GetNewS3(logger log.Logger, config configs.Config) (AWSS3, error) {
 
 	sess, err := session.NewSession(awsConfigs)
 	if err != nil {
-		logger.Errorf("cannot create aws session: %s", err.Error())
+		logger.Errorf("cannot create aws Session: %s", err.Error())
 
-		return nil, err
+		return AWSS3{}, err
 	}
 
 	svc := s3.New(sess)
 
-	return awsS3{S3: svc, session: sess, config: awsConfigs}, nil
+	return AWSS3{S3: svc, Session: sess, config: awsConfigs}, nil
 }

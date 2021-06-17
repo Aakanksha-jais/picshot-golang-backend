@@ -23,7 +23,7 @@ func New() stores.Blog {
 // GetAll is used to retrieve all blogs that match the filter.
 // BLogs can be filtered by account_id, blog_id and title.
 func (b blog) GetAll(ctx *app.Context, filter *models.Blog, page *models.Page) ([]*models.Blog, error) {
-	collection := ctx.Mongo.DB().Collection("blogs")
+	collection := ctx.Mongo.Collection("blogs")
 
 	opts := options.Find().SetSort(bson.D{{Key: "created_on", Value: -1}}) // retrieve the blogs in reverse chronological order
 
@@ -59,7 +59,7 @@ func (b blog) GetAll(ctx *app.Context, filter *models.Blog, page *models.Page) (
 
 // GetByIDs retrieves all blogs whose IDs have been provided as parameter.
 func (b blog) GetByIDs(ctx *app.Context, idList []string, page *models.Page) ([]*models.Blog, error) {
-	collection := ctx.Mongo.DB().Collection("blogs")
+	collection := ctx.Mongo.Collection("blogs")
 
 	opts := options.Find().SetSort(bson.D{{Key: "created_on", Value: -1}})
 
@@ -102,7 +102,7 @@ func (b blog) Get(ctx *app.Context, filter *models.Blog) (*models.Blog, error) {
 
 	var blog models.Blog
 
-	collection := ctx.Mongo.DB().Collection("blogs")
+	collection := ctx.Mongo.Collection("blogs")
 
 	res := collection.FindOne(ctx, filter.GetFilter())
 
@@ -128,7 +128,7 @@ func (b blog) Create(ctx *app.Context, model *models.Blog) (*models.Blog, error)
 		return nil, nil
 	}
 
-	collection := ctx.Mongo.DB().Collection("blogs")
+	collection := ctx.Mongo.Collection("blogs")
 
 	res, err := collection.InsertOne(ctx, model) // nil is returned if InsertOne operation is successful
 	if err != nil {
@@ -146,7 +146,7 @@ func (b blog) Update(ctx *app.Context, model *models.Blog) (*models.Blog, error)
 		return nil, nil
 	}
 
-	collection := ctx.Mongo.DB().Collection("blogs")
+	collection := ctx.Mongo.Collection("blogs")
 
 	res := collection.FindOneAndUpdate(ctx, bson.M{"_id": model.BlogID}, generateFilter(model))
 
@@ -199,7 +199,7 @@ func generateFilter(model *models.Blog) bson.M {
 
 // Delete deletes a blog by its ID.
 func (b blog) Delete(ctx *app.Context, blogID string) error {
-	collection := ctx.Mongo.DB().Collection("blogs")
+	collection := ctx.Mongo.Collection("blogs")
 
 	res := collection.FindOneAndDelete(ctx, bson.D{bson.E{Key: "_id", Value: blogID}})
 

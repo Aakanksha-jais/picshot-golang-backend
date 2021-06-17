@@ -1,4 +1,4 @@
-package app
+package datastore
 
 import (
 	"database/sql"
@@ -10,17 +10,9 @@ import (
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 )
 
-type SQLClient interface {
-	GetDB() *sql.DB
-}
-
-type sqlClient struct {
+type SQLClient struct {
 	*sql.DB
 	config *SQLConfig
-}
-
-func (s sqlClient) GetDB() *sql.DB {
-	return s.DB
 }
 
 type SQLConfig struct {
@@ -54,16 +46,16 @@ func GetNewSQLClient(logger log.Logger, config configs.Config) (SQLClient, error
 	db, err := sql.Open("mysql", connectionString)
 	if err != nil {
 		logger.Fatalf("cannot connect to sql %v", err)
-		return sqlClient{}, err
+		return SQLClient{}, err
 	}
 
 	err = db.Ping()
 	if err != nil {
 		logger.Fatalf("error in pinging mysql client: %v", err)
-		return sqlClient{}, err
+		return SQLClient{}, err
 	}
 
 	logger.Infof("connected to mysql: [%v@%v at port: %v]", sqlConfig.Username, sqlConfig.HostName, sqlConfig.Port)
 
-	return sqlClient{DB: db, config: sqlConfig}, nil
+	return SQLClient{DB: db, config: sqlConfig}, nil
 }
