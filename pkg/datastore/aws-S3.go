@@ -1,4 +1,4 @@
-package app
+package datastore
 
 import (
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"

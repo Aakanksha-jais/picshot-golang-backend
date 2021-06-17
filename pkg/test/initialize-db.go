@@ -1,4 +1,4 @@
-package app
+package test
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -17,7 +19,7 @@ import (
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 )
 
-func AddTestData(db *mongo.Database, sqlDB *sql.DB, awsS3 AWSS3, logger log.Logger) {
+func AddTestData(db *mongo.Database, sqlDB *sql.DB, awsS3 app.AWSS3, logger log.Logger) {
 	InitializeTestBlogsCollection(db, logger, "./db")
 
 	InitializeTestTagsCollection(db, logger, "./db")
@@ -27,7 +29,7 @@ func AddTestData(db *mongo.Database, sqlDB *sql.DB, awsS3 AWSS3, logger log.Logg
 	//InitializeTestAWSBucket(awsS3, os.Getenv("AWS_BUCKET"), logger, "./db")
 }
 
-func InitializeTestAWSBucket(awsS3 AWSS3, bucket string, logger log.Logger, directory string) {
+func InitializeTestAWSBucket(awsS3 app.AWSS3, bucket string, logger log.Logger, directory string) {
 	objects := make([]*s3.ObjectIdentifier, 0)
 
 	svc := awsS3.Service()
