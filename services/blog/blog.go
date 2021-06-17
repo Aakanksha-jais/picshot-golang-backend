@@ -69,8 +69,8 @@ func (b blog) GetByID(ctx *app.Context, id string) (*models.Blog, error) {
 // Create is used to create a Blog.
 // Missing params check for fields should be done on the frontend as well.
 func (b blog) Create(ctx *app.Context, model *models.Blog, images []*multipart.FileHeader) (*models.Blog, error) {
-	id := ctx.Value(auth.JWTContextKey("user_id"))
-	model.AccountID = id.(int64)
+	jwtIDKey := auth.JWTContextKey("claims")
+	model.AccountID = ctx.Value(jwtIDKey).(*auth.Claims).UserID
 
 	model.BlogID = generateNewID()
 
@@ -118,8 +118,8 @@ func (b blog) Create(ctx *app.Context, model *models.Blog, images []*multipart.F
 // Image array will be empty if no new images are added
 // Tags will be overwritten
 func (b blog) Update(ctx *app.Context, model *models.Blog, images []*multipart.FileHeader) (*models.Blog, error) {
-	userID := ctx.Value(auth.JWTContextKey("user_id"))
-	model.AccountID = userID.(int64)
+	jwtIDKey := auth.JWTContextKey("claims")
+	model.AccountID = ctx.Value(jwtIDKey).(*auth.Claims).UserID
 
 	id := model.BlogID
 	if id == "" {

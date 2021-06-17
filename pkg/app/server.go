@@ -5,17 +5,37 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/middlewares"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
 
-	"github.com/Aakanksha-jais/picshot-golang-backend/middlewares"
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
 )
 
 type server struct {
 	contextPool sync.Pool
 	Router      *Router
+}
+
+func NewServer(app *App) *server {
+	s := &server{
+		Router: NewRouter(),
+	}
+
+	s.setUpAuth(app.Config, app.Logger)
+
+	s.Router.Use(s.contextInjector())
+
+	s.contextPool.New = func() interface{} {
+		return NewContext(nil, nil, app)
+	}
+
+	return s
 }
 
 func (s *server) Start(logger log.Logger) {
@@ -29,25 +49,32 @@ func (s *server) Start(logger log.Logger) {
 	logger.Fatalf("error in starting the server: %v", server.ListenAndServe())
 }
 
-func NewServer(app *App) *server {
-	s := &server{
-		Router: NewRouter(),
+func (s *server) setUpAuth(config configs.Config, logger log.Logger) {
+	if options, ok := getOAuthOptions(config); ok {
+		s.Router.Use(middlewares.Authentication(logger, options))
+
+		logger.Infof("auth middleware enabled")
+	}
+}
+
+func getOAuthOptions(config configs.Config) (auth.Options, bool) {
+	var (
+		options auth.Options
+		ok      bool
+	)
+
+	if jwkPath := config.Get("JWKS_ENDPOINT"); jwkPath != "" {
+		options.JWKPath = jwkPath
+		ok = true
+
+		if validFrequency, err := strconv.Atoi(config.Get("OAUTH_CACHE_VALIDITY")); err != nil || validFrequency == 0 {
+			options.ValidityFrequency = 1800
+		} else {
+			options.ValidityFrequency = validFrequency
+		}
 	}
 
-	if app.Config.GetOrDefault("ENABLE_AUTH", "YES") == "YES" {
-		app.Infof("authentication middleware enabled")
-		s.Router.Use(middlewares.Authentication(app.Logger, auth.NewEmptyClaim()))
-	} else {
-		app.Warnf("authentication middleware disabled, some endpoints will not run")
-	}
-
-	s.Router.Use(s.contextInjector())
-
-	s.contextPool.New = func() interface{} {
-		return NewContext(nil, nil, app)
-	}
-
-	return s
+	return options, ok
 }
 
 type contextKey int
