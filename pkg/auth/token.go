@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"io/ioutil"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
@@ -28,7 +27,7 @@ func CreateToken(userID int64) (string, error) {
 
 	signedToken, err := token.SignedString(key)
 	if err != nil {
-		return "", fmt.Errorf("create: sign token: %w", err)
+		return "", errors.Error{Err: err, Msg: "error in signing token"}
 	}
 
 	return signedToken, nil
