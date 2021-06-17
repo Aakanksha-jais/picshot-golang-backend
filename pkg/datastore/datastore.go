@@ -1,9 +1,7 @@
 package datastore
 
-import "github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
-
 type DataStore struct {
-	Mongo app.MongoDB
+	Mongo MongoDB
 	SQL   SQLClient
-	S3    app.AWSS3
+	S3    AWSS3
 }

@@ -3,7 +3,12 @@ package app
 import (
 	"net/http"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/datastore"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/test"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/constants"
 
@@ -15,7 +20,7 @@ type App struct {
 	server *server
 	log.Logger
 	configs.Config
-	DataStore
+	datastore.DataStore
 }
 
 func New() *App {
@@ -29,8 +34,10 @@ func New() *App {
 
 	app.initializeStores(app.Config)
 
-	// For Testing
-	app.loadTestData()
+	// For End-to-End Testing
+	if strings.EqualFold(app.Get("ENV"), "development") {
+		app.loadTestData()
+	}
 
 	// initialize server
 	app.server = NewServer(app)
@@ -79,17 +86,17 @@ func (a *App) readConfig() {
 func (a *App) initializeStores(config configs.Config) {
 	var err error
 
-	a.Mongo, err = GetNewMongoDB(a.Logger, config)
+	a.Mongo, err = datastore.GetNewMongoDB(a.Logger, config)
 	if err != nil {
 		go mongoRetry(config, a)
 	}
 
-	a.SQL, err = GetNewSQLClient(a.Logger, config)
+	a.SQL, err = datastore.GetNewSQLClient(a.Logger, config)
 	if err != nil {
 		go sqlRetry(config, a)
 	}
 
-	a.S3, err = GetNewS3(a.Logger, config)
+	a.S3, err = datastore.GetNewS3(a.Logger, config)
 	if err != nil {
 		go s3Retry(config, a)
 	}
@@ -103,7 +110,7 @@ func mongoRetry(config configs.Config, app *App) {
 
 		var err error
 
-		app.Mongo, err = GetNewMongoDB(app, config)
+		app.Mongo, err = datastore.GetNewMongoDB(app, config)
 
 		if err == nil {
 			app.Info("mongo initialized successfully")
@@ -121,7 +128,7 @@ func sqlRetry(config configs.Config, app *App) {
 
 		var err error
 
-		app.SQL, err = GetNewSQLClient(app, config)
+		app.SQL, err = datastore.GetNewSQLClient(app, config)
 
 		if err == nil {
 			app.Info("sql initialized successfully")
@@ -139,7 +146,7 @@ func s3Retry(config configs.Config, app *App) {
 
 		var err error
 
-		app.S3, err = GetNewS3(app, config)
+		app.S3, err = datastore.GetNewS3(app, config)
 
 		if err == nil {
 			app.Info("s3 session initialized successfully")
@@ -150,12 +157,7 @@ func s3Retry(config configs.Config, app *App) {
 }
 
 func (a *App) loadTestData() {
-	if a.Get("LOAD_TEST_DATA") == "YES" {
-		AddTestData(a.Mongo.DB(), a.SQL.GetDB(), a.S3, a.Logger)
-		a.Infof("test data has been loaded: all existing data across all databases is overwritten")
+	test.AddTestData(a.Mongo, a.SQL, a.S3, a.Logger)
 
-		return
-	}
-
-	a.Debug("test data was not loaded")
+	a.Infof("test data has been loaded: all existing data across all databases is overwritten")
 }

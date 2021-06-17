@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app/response"
+	response2 "github.com/Aakanksha-jais/picshot-golang-backend/pkg/response"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/errors"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
@@ -21,7 +22,7 @@ func Authentication(logger log.Logger, options auth.Options) func(inner http.Han
 
 			if err, ok := exemptPath(oAuth, r); ok {
 				if err != nil {
-					response.WriteResponse(w, err, nil, logger)
+					response2.WriteResponse(w, err, nil, logger)
 					return
 				}
 
@@ -42,7 +43,7 @@ func Authentication(logger log.Logger, options auth.Options) func(inner http.Han
 				return
 			}
 
-			response.WriteResponse(w, err, nil, logger)
+			response2.WriteResponse(w, err, nil, logger)
 		})
 	}
 }
