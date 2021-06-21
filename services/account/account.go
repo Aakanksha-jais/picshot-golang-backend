@@ -2,7 +2,12 @@ package account
 
 import (
 	"database/sql"
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/auth"
@@ -19,6 +24,127 @@ import (
 type account struct {
 	accountStore stores.Account
 	blogService  services.Blog
+}
+
+func (a account) SendOTP(ctx *app.Context, phone string) (*models.VerificationResponse, error) {
+	err := validatePhone(phone)
+	if err != nil {
+		return nil, err
+	}
+
+	params := url.Values{}
+	params.Set("FriendlyName", "PicShot (phone number)")
+	body := strings.NewReader(params.Encode())
+
+	req, err := http.NewRequest(http.MethodPost, "https://verify.twilio.com/v2/Services", body)
+	if err != nil {
+		return nil, errors.Error{Err: err}
+	}
+
+	req.SetBasicAuth(ctx.Get("TWILIO_ACCOUNT_SID"), ctx.Get("TWILIO_AUTH_TOKEN")) // set auth header
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, errors.Error{Err: err}
+	}
+
+	bodyBytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.BodyRead{Err: err, Msg: "cannot read response body of twilio.com"}
+	}
+
+	type links struct {
+		Verifications      string `json:"verifications"`
+		VerificationChecks string `json:"verification_checks"`
+	}
+	resp := struct {
+		Links links `json:"links"`
+	}{}
+
+	err = json.Unmarshal(bodyBytes, &resp)
+	if err != nil {
+		return nil, errors.Unmarshal{Err: err, Msg: "cannot unmarshal response from twilio.com"}
+	}
+
+	params = url.Values{}
+	params.Set("To", phone)
+	params.Set("Channel", "sms")
+
+	body = strings.NewReader(params.Encode())
+
+	req, err = http.NewRequest(http.MethodPost, resp.Links.Verifications, body)
+	if err != nil {
+		return nil, errors.Error{Err: err}
+	}
+
+	req.SetBasicAuth(ctx.Get("TWILIO_ACCOUNT_SID"), ctx.Get("TWILIO_AUTH_TOKEN"))
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	res, err = http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, errors.Error{Err: err}
+	}
+
+	bodyBytes, err = ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.BodyRead{Err: err, Msg: "cannot read response body of twilio.com"}
+	}
+
+	var sid struct {
+		SID string `json:"sid"`
+	}
+
+	err = json.Unmarshal(bodyBytes, &sid)
+	if err != nil {
+		return nil, errors.Unmarshal{Err: err, Msg: "cannot unmarshal response from twilio.com"}
+	}
+
+	return &models.VerificationResponse{URL: resp.Links.VerificationChecks, SID: sid.SID}, nil
+}
+func (a account) VerifyPhone(ctx *app.Context, sid, otp, reqURL string) error {
+	params := url.Values{}
+	params.Set("Code", otp)
+	params.Set("VerificationSid", sid)
+
+	body := strings.NewReader(params.Encode())
+
+	req, err := http.NewRequest(http.MethodPost, reqURL, body)
+	if err != nil {
+		return errors.Error{Err: err}
+	}
+
+	req.SetBasicAuth(ctx.Get("TWILIO_ACCOUNT_SID"), ctx.Get("TWILIO_AUTH_TOKEN"))
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return errors.Error{Err: err}
+	}
+
+	bodyBytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return errors.BodyRead{Err: err, Msg: "cannot read response body of twilio.com"}
+	}
+
+	var resp struct {
+		Status interface{} `json:"status"`
+	}
+
+	err = json.Unmarshal(bodyBytes, &resp)
+	if err != nil {
+		return errors.Unmarshal{Err: err, Msg: "cannot unmarshal response from twilio.com"}
+	}
+
+	status, ok := resp.Status.(string)
+	if ok && status == "approved" {
+		return nil
+	}
+
+	return errors.InvalidParam{Param: "OTP"}
 }
 
 func New(accountStore stores.Account, blogService services.Blog) services.Account {

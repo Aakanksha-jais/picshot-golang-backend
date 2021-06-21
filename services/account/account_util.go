@@ -156,7 +156,7 @@ func validateUser(user *models.User, config configs.Config) error {
 	}
 
 	if user.Email.String == "" && user.PhoneNo.String == "" {
-		return errors.MissingParam{Param: "email"}
+		return errors.MissingParam{Param: "email/phone"}
 	}
 
 	if user.Email.String != "" {
@@ -223,9 +223,6 @@ func validateEmail(email string) error {
 }
 
 func realEmail(email, apiKey string) error {
-	type RealEmailResponse struct {
-		Status string `json:"status"`
-	}
 	reqURL := "https://isitarealemail.com/api/email/validate?email=" + url.QueryEscape(email)
 
 	req, _ := http.NewRequest("GET", reqURL, nil)
@@ -263,7 +260,7 @@ func realEmail(email, apiKey string) error {
 }
 
 func validatePhone(phone string) error {
-	res, err := regexp.MatchString(`^[0-9]+$`, phone)
+	res, err := regexp.MatchString(`^[0-9]+$`, phone[3:])
 	if err == nil && res {
 		return nil
 	}

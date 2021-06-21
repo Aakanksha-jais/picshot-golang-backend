@@ -38,6 +38,11 @@ type Account interface {
 
 	// CheckAvailability checks if username, phone number and email exist in the database already.
 	CheckAvailability(c *app.Context, user *models.User) error
+
+	// VerifyPhone verifies phone number if the OTP matches.
+	VerifyPhone(ctx *app.Context, sid, otp, url string) error
+
+	SendOTP(ctx *app.Context, phone string) (*models.VerificationResponse, error)
 }
 
 type Blog interface {

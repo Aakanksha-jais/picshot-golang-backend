@@ -12,6 +12,8 @@ type Account interface {
 	Logout(ctx *app.Context) (interface{}, error)
 	Delete(ctx *app.Context) (interface{}, error)
 	GetUser(ctx *app.Context) (interface{}, error)
+	SendOTP(c *app.Context) (interface{}, error)
+	VerifyPhone(c *app.Context) (interface{}, error)
 	UpdatePassword(ctx *app.Context) (interface{}, error)
 	CheckAvailability(ctx *app.Context) (interface{}, error)
 }

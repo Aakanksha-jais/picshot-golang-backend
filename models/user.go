@@ -6,13 +6,18 @@ import (
 )
 
 type User struct {
-	ID       int64          // Unique User ID
-	UserName string         // Username
-	FName    string         // First Name
-	LName    string         // Last Name
-	Email    sql.NullString // Email
-	PhoneNo  sql.NullString // Phone Number
-	Password string         // Password
+	ID       int64          `json:"id"`        // Unique User ID
+	UserName string         `json:"user_name"` // Username
+	FName    string         `json:"f_name"`    // First Name
+	LName    string         `json:"l_name"`    // Last Name
+	Email    sql.NullString `json:"email"`     // Email
+	PhoneNo  sql.NullString `json:"phone_no"`  // Phone Number
+	Password string         `json:"password"`  // Password
+}
+
+type VerificationResponse struct {
+	URL string `json:"url"`
+	SID string `json:"sid"`
 }
 
 func (u User) String() string {

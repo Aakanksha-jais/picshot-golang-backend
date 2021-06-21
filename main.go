@@ -45,6 +45,8 @@ func main() {
 	app.GET("/available", accountHandler.CheckAvailability)
 	app.PUT("/password", accountHandler.UpdatePassword)
 	app.DELETE("/myaccount", accountHandler.Delete)
+	app.POST("/send-otp/{phone}", accountHandler.SendOTP)
+	app.POST("/verify-phone", accountHandler.VerifyPhone)
 
 	// Routes for Blogs
 	app.GET("/blogs", blogHandler.GetAll)

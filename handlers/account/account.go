@@ -19,6 +19,27 @@ type account struct {
 	service services.Account
 }
 
+func (a account) SendOTP(ctx *app.Context) (interface{}, error) {
+	phone := ctx.Request.PathParam("phone")
+
+	return a.service.SendOTP(ctx, phone)
+}
+
+func (a account) VerifyPhone(ctx *app.Context) (interface{}, error) {
+	phone := struct {
+		URL string `json:"url"`
+		SID string `json:"sid"`
+		OTP string `json:"otp"`
+	}{}
+
+	err := ctx.Request.Unmarshal(&phone)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, a.service.VerifyPhone(ctx, phone.SID, phone.OTP, phone.URL)
+}
+
 func New(service services.Account) handlers.Account {
 	return account{service: service}
 }
