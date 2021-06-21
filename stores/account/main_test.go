@@ -4,6 +4,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/datastore"
+
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/log"
@@ -17,9 +19,9 @@ func TestMain(m *testing.M) {
 
 	testLogger := log.NewLogger()
 	testConfigs := configs.NewConfigLoader("../../configs")
-	db, _ := app.GetNewSQLClient(testLogger, testConfigs)
+	db, _ := datastore.GetNewSQLClient(testLogger, testConfigs)
 
-	a = &app.App{Logger: testLogger, Config: testConfigs, DataStore: app.DataStore{SQL: db}}
+	a = &app.App{Logger: testLogger, Config: testConfigs, DataStore: datastore.DataStore{SQL: db}}
 
 	os.Exit(m.Run())
 }

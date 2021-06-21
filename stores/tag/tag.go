@@ -20,7 +20,7 @@ func New() stores.Tag {
 // A tag name uniquely identifies a tag entity.
 // The tag entity has tag name and list of blog_id's associated with the tag.
 func (t tag) Get(c *app.Context, name string) (*models.Tag, error) {
-	collection := c.Mongo.DB().Collection("tags")
+	collection := c.Mongo.Collection("tags")
 
 	var tag models.Tag
 
@@ -41,7 +41,7 @@ func (t tag) Get(c *app.Context, name string) (*models.Tag, error) {
 // Update adds blog_id to given list of tags.
 // Tags are created if they do not exist already.
 func (t tag) Update(c *app.Context, blogID, tag string, operation constants.Operation) error {
-	collection := c.Mongo.DB().Collection("tags")
+	collection := c.Mongo.Collection("tags")
 
 	res := collection.FindOneAndUpdate(c, bson.D{{Key: "_id", Value: tag}}, bson.M{string(operation): bson.M{"blog_id_list": blogID}})
 	if err := res.Err(); err != nil {
@@ -53,7 +53,7 @@ func (t tag) Update(c *app.Context, blogID, tag string, operation constants.Oper
 
 // Create inserts a new tag.
 func (t tag) Create(c *app.Context, tag *models.Tag) error {
-	collection := c.Mongo.DB().Collection("tags")
+	collection := c.Mongo.Collection("tags")
 
 	_, err := collection.InsertOne(c, tag)
 	if err != nil {
@@ -65,7 +65,7 @@ func (t tag) Create(c *app.Context, tag *models.Tag) error {
 
 // Delete removes a tag by its name.
 func (t tag) Delete(c *app.Context, tag string) error {
-	collection := c.Mongo.DB().Collection("tags")
+	collection := c.Mongo.Collection("tags")
 
 	res := collection.FindOneAndDelete(c, bson.D{bson.E{Key: "_id", Value: tag}})
 

@@ -31,7 +31,7 @@ func (a account) GetAll(ctx *app.Context, filter *models.Account) ([]*models.Acc
 
 	accounts := make([]*models.Account, 0)
 
-	rows, err := ctx.SQL.GetDB().QueryContext(ctx, query, qp...)
+	rows, err := ctx.SQL.QueryContext(ctx, query, qp...)
 	if err != nil {
 		return nil, errors.DBError{Err: err}
 	}
@@ -56,7 +56,7 @@ func (a account) GetAll(ctx *app.Context, filter *models.Account) ([]*models.Acc
 
 // Get retrieves a single account that matches a given filter.
 func (a account) Get(ctx *app.Context, filter *models.Account) (*models.Account, error) {
-	db := ctx.SQL.GetDB()
+	db := ctx.SQL
 
 	where, qp := filter.WhereClause()
 	query := get + where
@@ -86,7 +86,7 @@ func (a account) Get(ctx *app.Context, filter *models.Account) (*models.Account,
 
 // Create creates an account.
 func (a account) Create(ctx *app.Context, model *models.Account) (*models.Account, error) {
-	db := ctx.SQL.GetDB()
+	db := ctx.SQL
 
 	res, err := db.ExecContext(ctx, insert, model.UserName, model.Password, model.Email, model.FName, model.LName, model.PhoneNo, model.Status)
 	if err != nil {
@@ -108,7 +108,7 @@ func (a account) Create(ctx *app.Context, model *models.Account) (*models.Accoun
 
 // Update updates an account.
 func (a account) Update(ctx *app.Context, model *models.Account) (*models.Account, error) {
-	db := ctx.SQL.GetDB()
+	db := ctx.SQL
 
 	query, qp := generateSetClause(model)
 
@@ -181,7 +181,7 @@ func generateSetClause(model *models.Account) (setClause string, qp []interface{
 // Delete updates a delete request for an account and sets its status to inactive.
 // Account is then permanently deleted after 30 days of inactivity.
 func (a account) Delete(ctx *app.Context, id int64) error {
-	_, err := ctx.SQL.GetDB().ExecContext(ctx, "UPDATE accounts SET del_req = ?, status = ? WHERE id = ?", time.Now(), "INACTIVE", id)
+	_, err := ctx.SQL.ExecContext(ctx, "UPDATE accounts SET del_req = ?, status = ? WHERE id = ?", time.Now(), "INACTIVE", id)
 	if err != nil {
 		return errors.DBError{Err: err}
 	}

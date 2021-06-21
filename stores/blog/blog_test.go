@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/test"
+
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/mongo"
 
@@ -15,7 +17,7 @@ import (
 )
 
 func initializeTest() (*app.Context, stores.Blog) {
-	app.InitializeTestBlogsCollection(a.Mongo.DB(), a.Logger, "../../db")
+	test.InitializeTestBlogsCollection(a.Mongo.Database, a.Logger, "../../db")
 	return &app.Context{Context: context.TODO(), App: a}, New()
 }
 
@@ -105,7 +107,7 @@ func TestBlog_GetAll_Error(t *testing.T) {
 		Title  []int  `bson:"title"`
 	}
 
-	collection := ctx.Mongo.DB().Collection("blogs")
+	collection := ctx.Mongo.Collection("blogs")
 
 	_, _ = collection.InsertOne(ctx, demo{BlogID: "TEST_ID", Title: []int{1, 2, 3, 4}})
 
@@ -181,7 +183,7 @@ func TestBlog_GetByIDs_Error(t *testing.T) {
 		Title  []int  `bson:"title"`
 	}
 
-	collection := ctx.Mongo.DB().Collection("blogs")
+	collection := ctx.Mongo.Collection("blogs")
 
 	_, _ = collection.InsertOne(ctx, demo{BlogID: "TEST_ID", Title: []int{1, 2, 3, 4}})
 
@@ -211,16 +213,7 @@ func TestBlog_Get(t *testing.T) {
 		{
 			description: "get blog with blog id = MSO8WB2J7X",
 			input:       &models.Blog{BlogID: "MSO8WB2J7X"},
-			output: &models.Blog{
-				BlogID:    "MSO8WB2J7X",
-				AccountID: 3,
-				Title:     "books",
-				Summary:   "a blog on books",
-				Content:   "the subtle art of not giving a fuck- an award winner",
-				Tags:      []string{"#markmanson"},
-				CreatedOn: getTime("2021-02-12T15:04:05Z"),
-				Images:    []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/book.jpg"},
-			},
+			output:      &models.Blog{BlogID: "MSO8WB2J7X", AccountID: 3, Title: "books", Summary: "a blog on books", Content: "the subtle art of not giving a fuck- an award winner", Tags: []string{"#markmanson"}, CreatedOn: getTime("2021-02-12T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/book.jpg"}},
 		},
 		{description: "get blog with non-existing blog id", input: &models.Blog{BlogID: "DUMMY_ID_123"}, err: errors.DBError{Err: mongo.ErrNoDocuments}},
 	}
@@ -242,7 +235,7 @@ func TestBlog_Get_Error(t *testing.T) {
 		Title  []int  `bson:"title"`
 	}
 
-	collection := ctx.Mongo.DB().Collection("blogs")
+	collection := ctx.Mongo.Collection("blogs")
 
 	_, _ = collection.InsertOne(ctx, demo{BlogID: "TEST_ID", Title: []int{1, 2, 3, 4}})
 
@@ -304,44 +297,17 @@ func TestBlog_Update(t *testing.T) {
 		{
 			description: "valid update on title, tags and images.",
 			input:       &models.Blog{BlogID: "MSO8WB2J7X", Title: "new_title", Tags: []string{"tag1", "tag3"}, Images: []string{"url8"}},
-			output: &models.Blog{
-				BlogID:    "MSO8WB2J7X",
-				AccountID: 3,
-				Title:     "new_title",
-				Summary:   "a blog on books",
-				Content:   "the subtle art of not giving a fuck- an award winner",
-				Tags:      []string{"tag1", "tag3"},
-				CreatedOn: getTime("2021-02-12T15:04:05Z"),
-				Images:    []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/book.jpg", "url8"},
-			},
+			output:      &models.Blog{BlogID: "MSO8WB2J7X", AccountID: 3, Title: "new_title", Summary: "a blog on books", Content: "the subtle art of not giving a fuck- an award winner", Tags: []string{"tag1", "tag3"}, CreatedOn: getTime("2021-02-12T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/book.jpg", "url8"}},
 		},
 		{
 			description: "valid update on content and tags.",
 			input:       &models.Blog{BlogID: "POQA7B2J7X", Content: "new_content", Tags: []string{"#love", "life"}},
-			output: &models.Blog{
-				BlogID:    "POQA7B2J7X",
-				AccountID: 1,
-				Title:     "love",
-				Summary:   "a blog on love",
-				Content:   "new_content",
-				Tags:      []string{"#love", "life"},
-				CreatedOn: getTime("2019-03-16T15:04:05Z"),
-				Images:    []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/3b6c399e8f5d9d4f54f4d91c6db7cfde.jpg"},
-			},
+			output:      &models.Blog{BlogID: "POQA7B2J7X", AccountID: 1, Title: "love", Summary: "a blog on love", Content: "new_content", Tags: []string{"#love", "life"}, CreatedOn: getTime("2019-03-16T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/3b6c399e8f5d9d4f54f4d91c6db7cfde.jpg"}},
 		},
 		{
 			description: "valid update on summary.",
 			input:       &models.Blog{BlogID: "9SH7SH2V37", Summary: "new_summary", Tags: []string{"#memories", "#life"}},
-			output: &models.Blog{
-				BlogID:    "9SH7SH2V37",
-				AccountID: 2,
-				Title:     "memories",
-				Summary:   "new_summary",
-				Content:   "the best of childhood days!",
-				Tags:      []string{"#memories", "#life"},
-				CreatedOn: getTime("2021-04-08T15:04:05Z"),
-				Images:    []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/girl.jpeg", "https://picshot-images.s3.ap-south-1.amazonaws.com/kid.jpg"},
-			},
+			output:      &models.Blog{BlogID: "9SH7SH2V37", AccountID: 2, Title: "memories", Summary: "new_summary", Content: "the best of childhood days!", Tags: []string{"#memories", "#life"}, CreatedOn: getTime("2021-04-08T15:04:05Z"), Images: []string{"https://picshot-images.s3.ap-south-1.amazonaws.com/girl.jpeg", "https://picshot-images.s3.ap-south-1.amazonaws.com/kid.jpg"}},
 		},
 	}
 
@@ -362,16 +328,8 @@ func TestBlog_DeleteBlog(t *testing.T) {
 		blogID      string
 		err         error
 	}{
-		{
-			description: "valid delete.",
-			blogID:      "9SH7SH2V37",
-			err:         nil,
-		},
-		{
-			description: "invalid delete.",
-			blogID:      "9SH7SH2V37",
-			err:         errors.DBError{Err: mongo.ErrNoDocuments},
-		},
+		{description: "valid delete.", blogID: "9SH7SH2V37", err: nil},
+		{description: "invalid delete.", blogID: "9SH7SH2V37", err: errors.DBError{Err: mongo.ErrNoDocuments}},
 	}
 
 	for i := range tests {

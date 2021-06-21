@@ -1,4 +1,4 @@
-package app
+package datastore
 
 import (
 	"context"
@@ -13,10 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type MongoDB interface {
-	DB() *mongo.Database
-}
-
 // MongoConfig holds the configurations for Mongo Connectivity
 type MongoConfig struct {
 	HostName    string
@@ -28,13 +24,9 @@ type MongoConfig struct {
 	RetryWrites bool
 }
 
-type mongoDB struct {
+type MongoDB struct {
 	*mongo.Database
 	config *MongoConfig
-}
-
-func (db mongoDB) DB() *mongo.Database {
-	return db.Database
 }
 
 func getMongoConnectionString(config *MongoConfig) string {
@@ -90,16 +82,16 @@ func GetNewMongoDB(logger log.Logger, config configs.Config) (MongoDB, error) {
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		logger.Fatalf("cannot connect to mongo: %v", err)
-		return mongoDB{}, err
+		return MongoDB{}, err
 	}
 
 	err = client.Ping(ctx, nil)
 	if err != nil {
 		logger.Fatalf("error in pinging mongo client: %v", err)
-		return mongoDB{}, err
+		return MongoDB{}, err
 	}
 
-	logger.Infof("connected to mongo: [%v@%v at port %v]", mongoConfig.Username, mongoConfig.HostName, mongoConfig.Port)
+	logger.Infof("connected to mongo: [%v@%v at port: %v]", mongoConfig.Username, mongoConfig.HostName, mongoConfig.Port)
 
-	return mongoDB{Database: client.Database(mongoConfig.Database), config: mongoConfig}, nil
+	return MongoDB{Database: client.Database(mongoConfig.Database), config: mongoConfig}, nil
 }
