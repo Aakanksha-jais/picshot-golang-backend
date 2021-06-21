@@ -162,7 +162,7 @@ func (a account) Create(ctx *app.Context, user *models.User) (*models.Account, e
 	}
 
 	// check if user details are valid
-	err = validateUser(user)
+	err = validateUser(user, ctx.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -195,6 +195,10 @@ func (a account) CheckAvailability(ctx *app.Context, user *models.User) error {
 		}
 
 		if err := validateEmail(user.Email.String); err != nil {
+			return err
+		}
+
+		if err := realEmail(user.Email.String, ctx.Get("REALMAIL_API_KEY")); err != nil {
 			return err
 		}
 

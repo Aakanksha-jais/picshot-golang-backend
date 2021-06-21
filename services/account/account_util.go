@@ -2,8 +2,14 @@ package account
 
 import (
 	"database/sql"
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
+
+	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/configs"
 
 	"github.com/Aakanksha-jais/picshot-golang-backend/models"
 	"github.com/Aakanksha-jais/picshot-golang-backend/pkg/app"
@@ -140,7 +146,7 @@ func (a account) getUpdate(ctx *app.Context, account *models.Account, user *mode
 	return update, nil
 }
 
-func validateUser(user *models.User) error {
+func validateUser(user *models.User, config configs.Config) error {
 	if user.UserName == "" {
 		return errors.MissingParam{Param: "user_name"}
 	}
@@ -155,6 +161,10 @@ func validateUser(user *models.User) error {
 
 	if user.Email.String != "" {
 		if err := validateEmail(user.Email.String); err != nil {
+			return err
+		}
+
+		if err := realEmail(user.Email.String, config.Get("REALMAIL_API_KEY")); err != nil {
 			return err
 		}
 	}
@@ -203,12 +213,53 @@ func validateUsername(username string) error {
 }
 
 func validateEmail(email string) error {
-	res, err := regexp.MatchString(`^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+[.][a-zA-Z0-9-.]+$`, email)
-	if err == nil && res {
-		return nil
+	pattern := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	matches := pattern.MatchString(email)
+	if !matches {
+		return errors.InvalidParam{Param: "email"}
 	}
 
-	return errors.InvalidParam{Param: "email"}
+	return nil
+}
+
+func realEmail(email, apiKey string) error {
+	type RealEmailResponse struct {
+		Status string `json:"status"`
+	}
+	reqURL := "https://isitarealemail.com/api/email/validate?email=" + url.QueryEscape(email)
+
+	req, _ := http.NewRequest("GET", reqURL, nil)
+	req.Header.Set("Authorization", "bearer "+apiKey)
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return errors.Error{Err: err}
+	}
+
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return errors.BodyRead{Err: err, Msg: "cannot read response body of isitarealemail.com"}
+	}
+	if res.StatusCode != 200 {
+		return errors.Error{Msg: "invalid api key for isitarealemail.com"}
+	}
+
+	var resp struct {
+		Status string `json:"status"`
+	}
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		return errors.Unmarshal{Err: err, Msg: "cannot unmarshal response from isitarealemail.com"}
+	}
+
+	if resp.Status != "valid" {
+		return errors.EntityNotFound{Entity: "email"}
+	}
+
+	return nil
 }
 
 func validatePhone(phone string) error {
